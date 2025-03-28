@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id             Int      @id @default(autoincrement())
+  firstname      String 
+  lastname       String
+  phone          Int 
+  email          String   @unique
+  password       String
+  profilePicture String
+  homeAddress    String
+  orders         Order[]
+  comments       Comment[]
+}
+
+model Admin {
+  id       String @id @default(cuid())
+  username String @unique
+  email    String @unique
+  password String
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  image    String
+  path     String    @unique
+  products Product[]
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  image       String
+  isNew       Boolean  @default(false)
+  inStock     Boolean  @default(true)
+  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  user       Users       @relation(fields: [userId], references: [id])
+  userId     Int
+  totalPrice Float
+  status     String      @default("PENDING")
+  createdAt  DateTime    @default(now())
+  orderItems OrderItem[]
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   Int
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int
+  price     Float
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  user      Users    @relation(fields: [userId], references: [id])
+  userId    Int
+}
