@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log("Password hashed successfully");
 
-    if (isAdmin) {
+    if (!isAdmin) {
       console.log("Creating admin account");
       const admin = await prisma.admin.create({
         data: {

@@ -202,6 +202,58 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteCategory = async (categoryId: number, imagePath: string) => {
+    if (!confirm('Are you sure you want to delete this category? This will also delete all products in this category.')) {
+      return;
+    }
+
+    try {
+      // First delete the image
+      await handleDeleteImage(imagePath);
+
+      // Then delete the category
+      const response = await fetch(`/api/categories/${categoryId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete category");
+      }
+
+      // Update the UI
+      setCategories(categories.filter(category => category.id !== categoryId));
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      setUploadError("Failed to delete category");
+    }
+  };
+
+  const handleDeleteProduct = async (productId: number, imagePath: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    try {
+      // First delete the image
+      await handleDeleteImage(imagePath);
+
+      // Then delete the product
+      const response = await fetch(`/api/products/${productId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete product");
+      }
+
+      // Update the UI
+      setProducts(products.filter(product => product.id !== productId));
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      setUploadError("Failed to delete product");
+    }
+  };
+
   if (isLoading) {
     return <div className="p-4">Loading...</div>;
   }
@@ -303,12 +355,20 @@ export default function AdminDashboard() {
                   className="w-full h-32 object-cover mt-2"
                 />
                 <p className="text-sm text-gray-600 mt-2">Path: {category.path}</p>
-                <button
-                  onClick={() => handleDeleteImage(category.image)}
-                  className="mt-2 text-red-600 hover:text-red-800"
-                >
-                  Delete Image
-                </button>
+                <div className="flex space-x-2 mt-2">
+                  <button
+                    onClick={() => handleDeleteImage(category.image)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    Delete Image
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCategory(category.id, category.image)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    Delete Category
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -429,12 +489,20 @@ export default function AdminDashboard() {
                     </span>
                   )}
                 </div>
-                <button
-                  onClick={() => handleDeleteImage(product.image)}
-                  className="mt-2 text-red-600 hover:text-red-800"
-                >
-                  Delete Image
-                </button>
+                <div className="flex space-x-2 mt-2">
+                  <button
+                    onClick={() => handleDeleteImage(product.image)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    Delete Image
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProduct(product.id, product.image)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    Delete Product
+                  </button>
+                </div>
               </div>
             ))}
           </div>
