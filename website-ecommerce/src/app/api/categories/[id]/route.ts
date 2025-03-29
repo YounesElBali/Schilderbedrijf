@@ -1,16 +1,25 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: {params: Promise<{ id: string }> }  // This is the correct typing for dynamic parameters
 ) {
   try {
-    const categoryId = parseInt(params.id);
+    // Make sure params.id is safely parsed as a number
+    const categoryId = parseInt((await params).id, 10); // Adding the radix 10 for base 10
 
-    // First get the category to get the image path
+    if (isNaN(categoryId)) {
+      return NextResponse.json(
+        { message: "Invalid category ID" },
+        { status: 400 }
+      );
+    }
+
+    // First, get the category to verify if it exists
     const category = await prisma.category.findUnique({
       where: { id: categoryId },
     });
@@ -37,4 +46,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}

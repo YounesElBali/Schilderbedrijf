@@ -5,11 +5,11 @@ const prisma = new PrismaClient();
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { status } = await request.json();
-    const orderId = parseInt(params.id);
+    const orderId = parseInt((await params).id);
 
     if (!status) {
       return NextResponse.json(

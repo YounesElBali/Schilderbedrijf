@@ -12,8 +12,8 @@ interface Product {
 }
 
 // Assuming this file is in the path `app/category/[category]/page.tsx`
-export default function TapeMaterialenListing({ params }: { params: { categories: string } }) {
-  const { categories: categoryParam } = params;
+export default async function TapeMaterialenListing({ params }: { params: Promise<{ categories: string }> }) {
+  const { categories: categoryParam } = await params;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [categoryList, setCategoryList] = useState<{ id: number; name: string; image: string; path: string }[]>([]);

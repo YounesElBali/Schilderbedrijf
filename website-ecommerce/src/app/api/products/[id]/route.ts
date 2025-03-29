@@ -1,20 +1,21 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check if the id is a number (product id) or a string (category name)
-    const isNumeric = /^\d+$/.test(params.id);
+    const isNumeric = /^\d+$/.test((await context.params).id);
     
     if (isNumeric) {
       // If numeric, fetch a single product
       const product = await prisma.product.findUnique({
-        where: { id: parseInt(params.id) },
+        where: { id: parseInt((await context.params).id) },
         include: { category: true }
       });
       
@@ -31,7 +32,7 @@ export async function GET(
       const products = await prisma.product.findMany({
         where: {
           category: {
-            name: params.id,
+            name: (await context.params).id,
           },
         },
         include: {
@@ -51,11 +52,11 @@ export async function GET(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const productId = parseInt(params.id);
+    const productId = parseInt((await context.params).id);
 
     // First get the product to get the image path
     const product = await prisma.product.findUnique({
