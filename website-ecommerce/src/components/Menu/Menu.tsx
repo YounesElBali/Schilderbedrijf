@@ -14,8 +14,8 @@ export function Menu() {
       <br/>
       <ProductCategories />
       <br/>
-      <BestsellersSection />
-      <br/>
+      {/* <BestsellersSection />
+      <br/> */}
       <TestimonialCarousel />
       <br/>
       {/* Empty Cart Sliding Modal */}

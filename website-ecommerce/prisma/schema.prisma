@@ -39,16 +39,17 @@ model Category {
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   name        String
   description String?
   price       Float
   image       String
-  isNew       Boolean  @default(false)
-  inStock     Boolean  @default(true)
-  category    Category @relation(fields: [categoryId], references: [id])
+  isNew       Boolean     @default(false)
+  inStock     Boolean     @default(true)
+  category    Category    @relation(fields: [categoryId], references: [id])
   categoryId  Int
   orderItems  OrderItem[]
+  bestseller  Bestseller?
 }
 
 model Order {
@@ -79,4 +80,13 @@ model Comment {
   createdAt DateTime @default(now())
   user      Users    @relation(fields: [userId], references: [id])
   userId    Int
+}
+
+model Bestseller {
+  id        Int      @id @default(autoincrement())
+  product   Product  @relation(fields: [productId], references: [id])
+  productId Int      @unique
+  rank      Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

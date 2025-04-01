@@ -93,13 +93,11 @@
     <!-- Hero Image -->
     <div class="w-4/5 py-4">
       <div class="relative">
-        <img src="/api/placeholder/1200/600" alt="Painter with protective gear" class="w-full h-auto bg-gray-800" />
         
         <!-- Rating badge -->
         <div class="absolute top-10 left-1/3">
           <div class="flex items-center bg-white rounded-full pr-2 shadow">
             <div class="flex items-center">
-              <img src="/api/placeholder/24/24" alt="Google icon" class="rounded-full" />
               <span class="bg-yellow-500 text-white px-2 py-1 mx-1 rounded-full font-bold">4.7</span>
               <div class="flex text-yellow-500">
                 <span>★</span>

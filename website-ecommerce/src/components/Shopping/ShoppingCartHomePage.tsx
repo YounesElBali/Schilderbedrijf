@@ -1,8 +1,59 @@
 "use client";
 import { useCart } from "@/contexts/CartContext";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+}
 
 export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeModal: () => void }) {
   const { cart, removeFromCart } = useCart();
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecommendedProducts = async () => {
+      if (cart.length === 0) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Get categories from current cart items
+        const categories = [...new Set(cart.map(item => item.category))];
+        
+        // Fetch recommended products based on categories
+        const response = await fetch('/api/products/recommended', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            categories,
+            excludeIds: cart.map(item => item.id)
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch recommendations');
+        }
+
+        const data = await response.json();
+        setRecommendedProducts(data);
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecommendedProducts();
+  }, [cart]);
 
   return (
     <>
@@ -52,6 +103,46 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
                 </div>
               </div>
             ))}
+
+            {/* Recommended Products */}
+            {!isLoading && recommendedProducts.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-xl font-bold mb-4">Aanbevolen voor jou</h3>
+                <div className="space-y-4">
+                  {recommendedProducts.map((product) => (
+                    <div key={product.id} className="border rounded-sm p-4 flex items-center">
+                      <div className="w-16 h-16 bg-gray-100 mr-4 flex items-center justify-center">
+                        <img src={product.image} alt={product.name} className="max-w-full max-h-full" />
+                      </div>
+                      <div className="flex-grow">
+                        <h4 className="font-medium">{product.name}</h4>
+                        <p className="text-lg font-semibold mt-1">€{product.price.toFixed(2)}</p>
+                      </div>
+                      <Link href={`/product/${product.id}`}>
+                        <button 
+                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                          onClick={closeModal}
+                        >
+                          Bekijken
+                        </button>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Checkout Button */}
+            <div className="mt-6">
+              <Link href="/checkout">
+                <button 
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  onClick={closeModal}
+                >
+                  Ga naar kassa
+                </button>
+              </Link>
+            </div>
           </div>
         )}
       </div>

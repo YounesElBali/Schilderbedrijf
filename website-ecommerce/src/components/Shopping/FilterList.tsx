@@ -21,7 +21,7 @@ export function SchuurMaterialenListing() {
 
   // Sample product data
   const products: Product[] = [
-    { id: 1, name: 'MOOZERS Apex Abrasives - P100 - 100x150MM - Schuurpapier - 50 stuks', price: 13.99, image: '/api/placeholder/150/150', isNew: true },
+    { id: 1, name: 'MOOZERS Apex Abrasives - P100 - 100x150MM - Schuurpapier - 50 stuks', price: 13.99, image: '//150/150', isNew: true },
     { id: 2, name: 'MOOZERS Apex Abrasives - P120 - 100x150MM - Schuurpapier - 50 stuks', price: 13.99, image: '/api/placeholder/150/150', isNew: true },
     { id: 3, name: 'MOOZERS Apex Abrasives - P150 - 100x150MM - Schuurpapier - 50 stuks', price: 13.99, image: '/api/placeholder/150/150', isNew: true },
     { id: 4, name: 'MOOZERS Apex Abrasives - P180 - 100x150MM - Schuurpapier - 50 stuks', price: 13.99, image: '/api/placeholder/150/150', isNew: true },
@@ -137,11 +137,11 @@ export function SchuurMaterialenListing() {
                       NIEUW
                     </div>
                   )}
-                  <img 
+                  {/* <img 
                     src={product.image} 
                     alt={product.name} 
                     className="w-full h-48 object-contain p-4"
-                  />
+                  /> */}
                 </div>
                 <div className="p-3 text-center">
                   <h3 className="font-bold text-sm mb-2">{product.name}</h3>
