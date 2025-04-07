@@ -3,12 +3,14 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-type Params = { params: { id: string } };
-
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { status } = await request.json();
-    const orderId = parseInt(params.id);
+    const orderId = (await params).id;
+    const orderIdInt = parseInt(orderId);
 
     if (!status) {
       return NextResponse.json(
@@ -18,7 +20,7 @@ export async function PATCH(request: Request, { params }: Params) {
     }
 
     const order = await prisma.order.update({
-      where: { id: orderId },
+      where: { id: orderIdInt },
       data: { status },
       include: {
         user: true,
@@ -39,12 +41,15 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 }
 
-export async function GET(request: Request, { params }: Params) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const orderId = parseInt(params.id);
-
+    const orderId = (await params).id;
+    const orderIdInt = parseInt(orderId);
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: { id: orderIdInt },
       select: {
         id: true,
         totalPrice: true,

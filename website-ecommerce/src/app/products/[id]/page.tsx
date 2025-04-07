@@ -13,7 +13,8 @@ interface Product {
   inStock: boolean;
 }
 
-export default function ProductPage({ params }: { params: { id: string } }) {
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;  
   const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +23,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`/api/products/${params.id}`);
+        const response = await fetch(`/api/products/${id}`);
         if (response.ok) {
           const data = await response.json();
           setProduct(data);
@@ -35,7 +36,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     };
 
     fetchProduct();
-  }, [params.id]);
+  }, [id]);
 
   const handleAddToCart = () => {
     if (product) {

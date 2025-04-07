@@ -3,12 +3,13 @@ import prisma from '@/lib/prisma';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const productId = parseInt(params.id);
+    const productId = (await params).id;
+    const productIdInt = parseInt(productId);
     
-    if (isNaN(productId)) {
+    if (isNaN(productIdInt)) {
       return NextResponse.json(
         { message: "Invalid product ID" },
         { status: 400 }
@@ -16,7 +17,7 @@ export async function GET(
     }
 
     const product = await prisma.product.findUnique({
-      where: { id: productId },
+      where: { id: productIdInt },
       include: { category: true }
     });
     
@@ -39,12 +40,13 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const productId = parseInt(params.id);
+    const productId = (await params).id;
+    const productIdInt = parseInt(productId);
 
-    if (isNaN(productId)) {
+    if (isNaN(productIdInt)) {
       return NextResponse.json(
         { message: "Invalid product ID" },
         { status: 400 }
@@ -52,7 +54,7 @@ export async function DELETE(
     }
 
     const product = await prisma.product.findUnique({
-      where: { id: productId },
+      where: { id: productIdInt },
     });
 
     if (!product) {
@@ -63,7 +65,7 @@ export async function DELETE(
     }
 
     await prisma.product.delete({
-      where: { id: productId },
+      where: { id: productIdInt },
     });
 
     return NextResponse.json({ 

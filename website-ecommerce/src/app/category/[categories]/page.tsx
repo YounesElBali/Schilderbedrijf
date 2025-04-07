@@ -12,8 +12,8 @@ interface Product {
 }
 
 // Assuming this file is in the path `app/category/[category]/page.tsx`
-export default function TapeMaterialenListing({ params }: { params: { categories: string } }) {
-  const { categories: categoryParam } = params;
+export default async function TapeMaterialenListing({ params }: { params: Promise<{ categories: string }> }) {
+  const { categories: categoryParam } = await params;
   
   const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
@@ -67,7 +67,7 @@ export default function TapeMaterialenListing({ params }: { params: { categories
     console.log('Fetching products for category:', categoryName);
     setLoading(true);
     try {
-      const res = await fetch(`/api/categories/${categoryName}/products`);
+      const res = await fetch(`/api/categories/${encodeURIComponent(categoryName)}/products`);
       console.log('Products response:', res);
       if (res.ok) {
         const data = await res.json();

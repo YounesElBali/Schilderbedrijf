@@ -25,7 +25,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
 
       try {
         // Get categories from current cart items
-        const categories = [...new Set(cart.map(item => item.category))];
+        const categories = [...new Set(cart.map(item => item))];
         
         // Fetch recommended products based on categories
         const response = await fetch('/api/products/recommended', {
