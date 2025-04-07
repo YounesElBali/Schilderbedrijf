@@ -3,13 +3,12 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type Params = { params: { id: string } };
+
+export async function PATCH(request: Request, { params }: Params) {
   try {
     const { status } = await request.json();
-    const orderId = parseInt((await params).id);
+    const orderId = parseInt(params.id);
 
     if (!status) {
       return NextResponse.json(
@@ -40,10 +39,7 @@ export async function PATCH(
   }
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, { params }: Params) {
   try {
     const orderId = parseInt(params.id);
 
@@ -69,17 +65,17 @@ export async function GET(
 
     if (!order) {
       return NextResponse.json(
-        { error: 'Order not found' },
+        { error: "Order not found" },
         { status: 404 }
       );
     }
 
     return NextResponse.json(order);
   } catch (error) {
-    console.error('Error fetching order:', error);
+    console.error("Error fetching order:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch order' },
+      { error: "Failed to fetch order" },
       { status: 500 }
     );
   }
-} 
+}
