@@ -61,8 +61,8 @@ model Order {
   status         String      @default("PENDING")
   createdAt      DateTime    @default(now())
   orderItems     OrderItem[]
-  shippingAddress Json       // Store address as JSON
-  billingAddress  Json       // Store address as JSON
+  shippingAddress String       // Store address as JSON
+  billingAddress  String       // Store address as JSON
   paymentMethod   String     // Store payment method
   paymentId      String?     // Store payment provider's ID (PayPal order ID)
 }

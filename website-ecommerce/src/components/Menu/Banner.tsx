@@ -28,7 +28,7 @@ export function Banner() {
       </div>
   
       {/* Header Section */}
-      <div className="bg-white py-4 shadow-sm w-full">
+      <div className="bg-[#f1efe7] py-4 shadow-sm w-full">
         <div className="mx-auto px-4 flex justify-between items-center">
           {/* Menu Button */}
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-2xl">
@@ -38,9 +38,9 @@ export function Banner() {
           {/* Logo */}
           <Link href="/">
           <img 
-            src="/Logo Pastoolz.JPG" 
+            src="/logoPastoolz.png" 
             alt="Pastoolz" 
-            className="h-6"
+            className="h-16"
           />
           </Link>
   

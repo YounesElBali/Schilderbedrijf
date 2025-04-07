@@ -149,7 +149,7 @@ export default function AdminDashboard() {
       if (res.ok) {
         const newCategory = await res.json();
         setCategories([...categories, newCategory]);
-        e.currentTarget.reset();
+    
       }
     } catch (error) {
       console.error("Error adding category:", error);
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
       if (res.ok) {
         const newProduct = await res.json();
         setProducts([...products, newProduct]);
-        e.currentTarget.reset();
+   
       }
     } catch (error) {
       console.error("Error adding product:", error);
