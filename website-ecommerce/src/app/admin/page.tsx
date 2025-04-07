@@ -27,6 +27,14 @@ interface Order {
   totalPrice: number;
   status: string;
   createdAt: string;
+  shippingAddress: {
+    firstName: string;
+    lastName: string;
+    street: string;
+    postalCode: string;
+    city: string;
+    country: string;
+  };
 }
 
 export default function AdminDashboard() {
@@ -526,6 +534,11 @@ export default function AdminDashboard() {
                     </p>
                     <p className="text-sm text-gray-600">
                       Date: {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">
+                      Gebruikers adres: {order.shippingAddress.street}, {order.shippingAddress.postalCode} {order.shippingAddress.city}
                     </p>
                   </div>
                   <div>

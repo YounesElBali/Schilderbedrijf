@@ -1,25 +1,23 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 export async function POST(request: Request) {
   try {
     const { categories, excludeIds } = await request.json();
-
+    
     // Fetch products from the same categories, excluding items already in cart
     const recommendedProducts = await prisma.product.findMany({
       where: {
-        category: {
-          in: categories
+        categoryId: {
+          in: categories.map((id: string) => parseInt(id))
         },
         id: {
           notIn: excludeIds
         }
       },
-      take: 3, // Limit to 3 recommendations
+      take: 3,
       orderBy: {
-        createdAt: 'desc' // Show newest products first
+        id: "desc"
       }
     });
 
@@ -27,7 +25,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error fetching recommended products:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch recommended products' },
+      { error: 'Error fetching recommended products' },
       { status: 500 }
     );
   }

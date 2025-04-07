@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { EmptyCartModal } from "../Shopping/ShoppingCartHomePage";
 import { useCart } from "../../contexts/CartContext"; // Zorg dat dit pad klopt
+import Marquee from "react-fast-marquee";
 
 export function Banner() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -14,11 +15,15 @@ export function Banner() {
   return (
     <div>
       {/* Top Notification Bar */}
-      <div className="bg-blue-900 text-white text-sm">
+      <div className="bg-[#d6ac0a] text-black text-sm">
         <div className="w-full px-4">
-          <div className="flex flex-wrap justify-between items-center py-2">
-            <p>Voor 16:00 besteld, zelfde dag verzonden!</p>
-          </div>
+            <Marquee >
+             - Voor 16:00 besteld, zelfde dag verzonden!  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  -   1000+ Klanten gingen u voor!  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  - Gratis verzending vanaf €80 - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  
+             - Voor 16:00 besteld, zelfde dag verzonden!  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  -   1000+ Klanten gingen u voor!  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  - Gratis verzending vanaf €80 - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  
+             - Voor 16:00 besteld, zelfde dag verzonden!  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  -   1000+ Klanten gingen u voor!  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  - Gratis verzending vanaf €80 - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  
+             - Voor 16:00 besteld, zelfde dag verzonden!  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  -   1000+ Klanten gingen u voor!  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  - Gratis verzending vanaf €80 - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  
+            
+            </Marquee>
         </div>
       </div>
   
@@ -31,12 +36,13 @@ export function Banner() {
           </button>
   
           {/* Logo */}
-          <div className="flex items-center">
-            <span className="text-black font-bold text-2xl">PAS</span>
-            <span className="text-blue-600 font-bold text-2xl">t</span>
-            <span className="text-black font-bold text-2xl">oolz</span>
-            <span className="text-sm align-top">®</span>
-          </div>
+          <Link href="/">
+          <img 
+            src="/Logo Pastoolz.JPG" 
+            alt="Pastoolz" 
+            className="h-6"
+          />
+          </Link>
   
           {/* Navigation Icons */}
           <div className="flex items-center gap-4">

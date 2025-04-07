@@ -4,56 +4,51 @@ import { NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const { 
-      userId, 
-      items, 
-      totalPrice, 
-      shippingAddress, 
-      billingAddress,
-      paymentMethod 
-    } = await request.json();
+    const body = await request.json();
+    const { userId, items, totalPrice, shippingAddress, billingAddress, paymentMethod, email } = body;
 
     // Validate required fields
-    if (!userId || !items || !totalPrice || !shippingAddress) {
+    if (!items || !totalPrice || !shippingAddress || !billingAddress || !paymentMethod || !email) {
       return NextResponse.json(
-        { message: "Missing required fields" },
+        { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Create the order with its items
+    // Create order
     const order = await prisma.order.create({
       data: {
-        userId: parseInt(userId),
+        userId: userId ? parseInt(userId) : null,
+        email,
         totalPrice: parseFloat(totalPrice),
-        status: "PENDING",
-        shippingAddress: JSON.stringify(shippingAddress),
-        billingAddress: billingAddress ? JSON.stringify(billingAddress) : null,
+        status: 'PENDING',
+        shippingAddress: shippingAddress,
+        billingAddress: billingAddress,
         paymentMethod,
         orderItems: {
           create: items.map((item: any) => ({
             productId: item.id,
             quantity: item.quantity,
-            price: item.price
-          }))
-        }
+            price: item.price,
+          })),
+        },
       },
       include: {
         orderItems: {
           include: {
-            product: true
-          }
-        }
-      }
+            product: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json(order);
   } catch (error) {
-    console.error("Error creating order:", error);
+    console.error('Error creating order:', error);
     return NextResponse.json(
-      { message: "Error creating order" },
+      { error: 'Failed to create order' },
       { status: 500 }
     );
   }
@@ -66,19 +61,20 @@ export async function GET() {
         user: true,
         orderItems: {
           include: {
-            product: true
-          }
-        }
+            product: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     });
+
     return NextResponse.json(orders);
   } catch (error) {
-    console.error("Error fetching orders:", error);
+    console.error('Error fetching orders:', error);
     return NextResponse.json(
-      { message: "Error fetching orders" },
+      { error: 'Failed to fetch orders' },
       { status: 500 }
     );
   }

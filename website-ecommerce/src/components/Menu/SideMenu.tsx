@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 export function SideMenu({ isOpen, closeModal }: { isOpen: boolean; closeModal: () => void }) {
   return (
@@ -8,13 +9,13 @@ export function SideMenu({ isOpen, closeModal }: { isOpen: boolean; closeModal: 
         <button className="p-2" onClick={closeModal}>
           x
         </button>
-        <div className="ml-4">
+        <Link href="/" className="ml-4">
           <img 
-            src="/Partoolz-logo.png" 
-            alt="Partoolz" 
-            className="h-6"
+            src="/Logo Pastoolz.JPG" 
+            alt="Pastoolz" 
+            className="h-8 w-auto object-contain"
           />
-        </div>
+        </Link>
         <span className="text-xs align-top ml-1">®</span>
       </div>
       

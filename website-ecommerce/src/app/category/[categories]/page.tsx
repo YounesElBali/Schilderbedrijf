@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { getCategories } from '../../../services/product.services'; // Assuming you have a service to fetch categories
 import Link from 'next/link';
-
+import { useCart } from '@/contexts/CartContext';
 interface Product {
   id: number;
   name: string;
@@ -12,11 +12,32 @@ interface Product {
 }
 
 // Assuming this file is in the path `app/category/[category]/page.tsx`
-export default async function TapeMaterialenListing({ params }: { params: Promise<{ categories: string }> }) {
-  const { categories: categoryParam } = await params;
+export default function TapeMaterialenListing({ params }: { params: { categories: string } }) {
+  const { categories: categoryParam } = params;
+  
+  const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sortOption, setSortOption] = useState('name-asc');
   const [categoryList, setCategoryList] = useState<{ id: number; name: string; image: string; path: string }[]>([]);
+
+  // Add sorting function
+  const sortProducts = (products: Product[], option: string) => {
+    const sortedProducts = [...products];
+    switch (option) {
+      case 'name-asc':
+        return sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+      case 'name-desc':
+        return sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
+      case 'price-asc':
+        return sortedProducts.sort((a, b) => a.price - b.price);
+      case 'price-desc':
+        return sortedProducts.sort((a, b) => b.price - a.price);
+      default:
+        return sortedProducts;
+    }
+  };
 
   // Fetch categories
   useEffect(() => {
@@ -46,20 +67,7 @@ export default async function TapeMaterialenListing({ params }: { params: Promis
     console.log('Fetching products for category:', categoryName);
     setLoading(true);
     try {
-      // Find the matching category from our list
-      const matchingCategory = categoryList.find(cat => 
-        cat.name.toLowerCase() === categoryName.toLowerCase() ||
-        cat.path.toLowerCase() === `/${categoryName.toLowerCase()}`
-      );
-      
-      if (!matchingCategory) {
-        console.error('No matching category found for:', categoryName);
-        setProducts([]);
-        return;
-      }
-
-      console.log('Found matching category:', matchingCategory);
-      const res = await fetch(`/api/products/${matchingCategory.name}`);
+      const res = await fetch(`/api/categories/${categoryName}/products`);
       console.log('Products response:', res);
       if (res.ok) {
         const data = await res.json();
@@ -67,9 +75,11 @@ export default async function TapeMaterialenListing({ params }: { params: Promis
         setProducts(data);
       } else {
         console.error('Failed to fetch products:', res.status, res.statusText);
+        setError('Failed to fetch products');
       }
     } catch (error) {
       console.error('Error fetching products:', error);
+      setError('Error fetching products');
     } finally {
       setLoading(false);
     }
@@ -102,12 +112,13 @@ export default async function TapeMaterialenListing({ params }: { params: Promis
                 <div className="relative">
                   <select
                     className="border border-gray-300 rounded p-2 pr-8 appearance-none"
-                    // Handle sorting logic here
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
                   >
-                    <option>Alfabetisch: A-Z</option>
-                    <option>Alfabetisch: Z-A</option>
-                    <option>Prijs: laag naar hoog</option>
-                    <option>Prijs: hoog naar laag</option>
+                    <option value="name-asc">Alfabetisch: A-Z</option>
+                    <option value="name-desc">Alfabetisch: Z-A</option>
+                    <option value="price-asc">Prijs: laag naar hoog</option>
+                    <option value="price-desc">Prijs: hoog naar laag</option>
                   </select>
                 </div>
               </div>
@@ -119,37 +130,28 @@ export default async function TapeMaterialenListing({ params }: { params: Promis
 
             {/* Product grid */}
             {!loading && products.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                {products.map((product) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                {sortProducts(products, sortOption).map((product) => (
                   <div key={product.id} className="border border-gray-200 rounded-md overflow-hidden">
                     <div className="relative">
                       {product.isNew && (
-                        <div className="absolute top-0 left-0 transform -rotate-45 translate-x-[-30%] translate-y-[40%] bg-yellow-400 text-xs font-bold px-6 py-1">
+                        <div className="absolute top-0 left-0 transform -rotate-45 translate-x-[-30%] translate-y-[40%] bg-yellow-400 text-xs font-bold px-4 py-0.5">
                           NIEUW
                         </div>
                       )}
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-48 object-contain p-4"
-                    />
-                    </div>
-                    <div className="p-3 text-center">
                       <Link 
                         href={`/products/${product.id}`} 
-                        className="font-bold text-sm mb-2 hover:text-blue-600 transition-colors"
+                        className="font-bold text-sm hover:text-blue-600 transition-colors"
                       >
-                        {product.name}
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-32 object-contain p-2"
+                        />
                       </Link>
-                      <p className="text-lg font-bold mb-1">€{product.price.toFixed(2)}</p>
-                      <p className="text-sm text-gray-500 mb-4">Incl. BTW</p>
-                      <button
-                        className="w-full bg-white border-2 border-black py-2 px-4 rounded font-medium hover:bg-gray-100 transition"
-                        onClick={() => console.log(`Added product ${product.id} to cart`)}
-                      >
-                        Aan winkelwagen toevoegen
-                      </button>
                     </div>
+                    <p className="text-sm text-center px-1">{product.name}</p>
+                    <p className="text-base font-bold mb-1 px-1">€{product.price.toFixed(2)} incl. BTW</p>
                   </div>
                 ))}
               </div>

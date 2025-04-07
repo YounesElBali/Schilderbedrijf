@@ -38,7 +38,7 @@ export function ProductCategories() {
             {/* Category Button */}
             <button
               onClick={() => navigateToCategory(category.path)}
-              className="absolute bottom-0 bg-blue-900 text-white py-2 px-4 min-w-32 flex items-center justify-between font-bold"
+              className="absolute bottom-0 bg-[#d6ac0a] text-black py-2 px-4 min-w-32 flex items-center justify-between font-bold"
             >
               <span>{category.name}</span>
               <svg 

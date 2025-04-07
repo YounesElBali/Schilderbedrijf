@@ -53,13 +53,18 @@ model Product {
 }
 
 model Order {
-  id         Int         @id @default(autoincrement())
-  user       Users       @relation(fields: [userId], references: [id])
-  userId     Int
-  totalPrice Float
-  status     String      @default("PENDING")
-  createdAt  DateTime    @default(now())
-  orderItems OrderItem[]
+  id             Int         @id @default(autoincrement())
+  user           Users?      @relation(fields: [userId], references: [id])
+  userId         Int?
+  email          String      // Add email field for guest checkout
+  totalPrice     Float
+  status         String      @default("PENDING")
+  createdAt      DateTime    @default(now())
+  orderItems     OrderItem[]
+  shippingAddress Json       // Store address as JSON
+  billingAddress  Json       // Store address as JSON
+  paymentMethod   String     // Store payment method
+  paymentId      String?     // Store payment provider's ID (PayPal order ID)
 }
 
 model OrderItem {
