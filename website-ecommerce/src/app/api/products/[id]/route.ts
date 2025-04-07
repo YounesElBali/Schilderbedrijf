@@ -1,64 +1,56 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import { NextRequest } from "next/server";
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    // Check if the id is a number (product id) or a string (category name)
-    const isNumeric = /^\d+$/.test((await context.params).id);
+    const productId = parseInt(params.id);
     
-    if (isNumeric) {
-      // If numeric, fetch a single product
-      const product = await prisma.product.findUnique({
-        where: { id: parseInt((await context.params).id) },
-        include: { category: true }
-      });
-      
-      if (!product) {
-        return NextResponse.json(
-          { message: "Product not found" },
-          { status: 404 }
-        );
-      }
-      
-      return NextResponse.json(product);
-    } else {
-      // If string, fetch products by category name
-      const products = await prisma.product.findMany({
-        where: {
-          category: {
-            name: (await context.params).id,
-          },
-        },
-        include: {
-          category: true,
-        },
-      });
-      
-      return NextResponse.json(products);
+    if (isNaN(productId)) {
+      return NextResponse.json(
+        { message: "Invalid product ID" },
+        { status: 400 }
+      );
     }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: { category: true }
+    });
+    
+    if (!product) {
+      return NextResponse.json(
+        { message: "Product not found" },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json(product);
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("Error fetching product:", error);
     return NextResponse.json(
-      { message: "Error fetching products" },
+      { message: "Error fetching product" },
       { status: 500 }
     );
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const productId = parseInt((await context.params).id);
+    const productId = parseInt(params.id);
 
-    // First get the product to get the image path
+    if (isNaN(productId)) {
+      return NextResponse.json(
+        { message: "Invalid product ID" },
+        { status: 400 }
+      );
+    }
+
     const product = await prisma.product.findUnique({
       where: { id: productId },
     });
@@ -70,7 +62,6 @@ export async function DELETE(
       );
     }
 
-    // Delete the product
     await prisma.product.delete({
       where: { id: productId },
     });
