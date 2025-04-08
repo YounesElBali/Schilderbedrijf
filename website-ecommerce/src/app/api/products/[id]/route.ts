@@ -3,20 +3,15 @@ import prisma from '@/lib/prisma';
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const productId = (await params).id;
     
-    if (isNaN(productId)) {
-      return NextResponse.json(
-        { message: "Invalid product ID" },
-        { status: 400 }
-      );
-    }
+    const idNumber = parseInt(productId);
 
     const product = await prisma.product.findUnique({
-      where: { id: productId },
+      where: { id: idNumber },
       include: { category: true }
     });
     

@@ -1,5 +1,5 @@
 'use client';
-import React, { use, useState, useEffect } from 'react';
+import React, {use, useState, useEffect } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import Link from 'next/link';
 
@@ -13,11 +13,12 @@ interface Product {
   inStock: boolean;
 }
 
-export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } =   use(params);
+export default function ProductPage({ params }: { params: Promise<{ id: number }> }) {
+  const { id } = use(params);
   const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
@@ -27,9 +28,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         if (response.ok) {
           const data = await response.json();
           setProduct(data);
+        } else {
+          setError('Product not found');
         }
       } catch (error) {
         console.error('Error fetching product:', error);
+        setError('Error fetching product');
       } finally {
         setLoading(false);
       }
@@ -52,6 +56,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   if (loading) {
     return <div className="max-w-7xl mx-auto p-4">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="max-w-7xl mx-auto p-4 text-red-500">{error}</div>;
   }
 
   if (!product) {
@@ -82,12 +90,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
           
           <div className="mb-6">
-            <p className="text-2xl font-bold text-blue-600">€{product.price.toFixed(2)} incl. BTW</p>
+            <p className="text-2xl font-bold text-black">€{product.price.toFixed(2)} incl. BTW</p>
           </div>
 
-          <div className="mb-6">
-            <p className="text-gray-600 whitespace-pre-line">{product.description}</p>
-          </div>
 
           <div className="mb-6">
             <div className="flex items-center space-x-4">
@@ -111,7 +116,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 disabled={!product.inStock}
                 className={`px-6 py-2 rounded ${
                   product.inStock
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? 'bg-[#d6ac0a] text-black hover:bg-[#000000] hover:text-white'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
@@ -126,6 +131,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <li>Artikelnummer: {product.id}</li>
               <li>Status: {product.inStock ? 'Op voorraad' : 'Niet op voorraad'}</li>
             </ul>
+          </div>
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold mb-2">Beschrijving</h3>
+            <p className="text-gray-600 whitespace-pre-line">{product.description}</p>
           </div>
         </div>
       </div>

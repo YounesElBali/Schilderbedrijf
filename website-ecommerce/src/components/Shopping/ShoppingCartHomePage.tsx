@@ -137,7 +137,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
             <div className="mt-6">
               <Link href="/checkout">
                 <button 
-                  className="w-full bg-[#d6ac0a] text-black py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  className="w-full bg-[#d6ac0a] text-black py-3 rounded-lg font-medium hover:bg-[#000000] hover:text-white transition-colors"
                   onClick={closeModal}
                 >
                   Ga naar kassa
