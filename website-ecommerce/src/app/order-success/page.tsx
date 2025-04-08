@@ -87,13 +87,13 @@ export default function OrderSuccessPage() {
 
           <div className="space-y-4">
             <p className="text-sm text-gray-500">
-              Je ontvangt binnen enkele minuten een bevestigingsmail met de details van je bestelling.
+              Je ontvangt binnen enkele minuten een bevestigingsmail met de details van je bestelling. Check ook je spam folder.
             </p>
 
             <div className="mt-8">
               <Link 
                 href="/"
-                className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-block bg-[#d6ac0a] text-black px-6 py-3 rounded-lg hover:bg-black hover:text-white transition-colors"
               >
                 Terug naar home
               </Link>
