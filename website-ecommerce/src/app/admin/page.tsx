@@ -208,10 +208,10 @@ export default function AdminDashboard() {
       let imagePath = editingProduct?.image;
       
       // Only upload new image if one is selected
-      if (imageFile.size > 0) {
-        imagePath = await handleImageUpload(imageFile);
-        if (!imagePath) return;
-      }
+      // if (imageFile.size > 0) {
+      //   imagePath = await handleImageUpload(imageFile);
+      //   if (!imagePath) return;
+      // }
 
       const res = await fetch(`/api/products/${editingProduct?.id}`, {
         method: "PATCH",
