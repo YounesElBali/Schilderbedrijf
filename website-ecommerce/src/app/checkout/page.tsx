@@ -99,9 +99,37 @@ export default function CheckoutPage() {
     e.preventDefault();
     setIsProcessing(true);
     setError(null);
-    handleOrderCompletion();
+  
+    try {
+      const formData = new FormData(document.querySelector('form') as HTMLFormElement);
+      const email = formData.get('email') as string;
+  
+      // Step 1: Create Mollie payment session
+      const paymentResponse = await fetch('/api/create-payment-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          totalPrice: getTotalPrice().toFixed(2),
+          email,
+          items: cart,
+        }),
+      });
+  
+      if (!paymentResponse.ok) throw new Error('Payment creation failed');
+  
+      const { paymentUrl } = await paymentResponse.json();
+  
+      // Step 2: Redirect to Mollie payment page
+      window.location.href = paymentUrl;
+    } catch (error) {
+      console.error('Payment error:', error);
+      setError('Er is een fout opgetreden tijdens het starten van de betaling.');
+      setIsProcessing(false);
+    }
   };
-
+  
   return (
     <div className="flex flex-col md:flex-row max-w-6xl mx-auto font-sans">
       {/* Left side - checkout form */}
