@@ -24,7 +24,7 @@ export function SideMenu({ isOpen, closeModal }: { isOpen: boolean; closeModal: 
         <ul className="py-2">
           <li>
             <a 
-              href="/category/tape" 
+              href="/category/Tape" 
               className="block px-6 py-4 text-gray-900 hover:bg-gray-100"
             >
               Tape
@@ -32,7 +32,7 @@ export function SideMenu({ isOpen, closeModal }: { isOpen: boolean; closeModal: 
           </li>
           <li>
             <a 
-              href="/category/schuren" 
+              href="/category/Schuren" 
               className="block px-6 py-4 text-gray-900 hover:bg-gray-100"
             >
               Schuren
@@ -40,7 +40,7 @@ export function SideMenu({ isOpen, closeModal }: { isOpen: boolean; closeModal: 
           </li>
           <li>
             <a 
-              href="/category/folie" 
+              href="/category/Folie" 
               className="block px-6 py-4 text-gray-900 hover:bg-gray-100"
             >
               Folie
@@ -48,7 +48,7 @@ export function SideMenu({ isOpen, closeModal }: { isOpen: boolean; closeModal: 
           </li>
           <li>
             <a 
-              href="/category/lijm" 
+              href="/category/Lijm" 
               className="block px-6 py-4 text-gray-900 hover:bg-gray-100"
             >
               Lijm
@@ -56,7 +56,7 @@ export function SideMenu({ isOpen, closeModal }: { isOpen: boolean; closeModal: 
           </li>
           <li>
             <a 
-              href="/category/polijst" 
+              href="/category/Polijst" 
               className="block px-6 py-4 text-gray-900 hover:bg-gray-100"
             >
               Polijst
