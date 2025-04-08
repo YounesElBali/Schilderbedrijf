@@ -1,9 +1,10 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { getCategories } from '../../../services/product.services'; // Assuming you have a service to fetch categories
+import React, { use, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useCart } from '@/contexts/CartContext';
-interface Product {
+import Image from 'next/image';
+
+interface Product 
+ {
   id: number;
   name: string;
   price: number;
@@ -12,16 +13,14 @@ interface Product {
 }
 
 // Assuming this file is in the path `app/category/[category]/page.tsx`
-export default async function TapeMaterialenListing({ params }: { params: Promise<{ categories: string }> }) {
-  const { categories: categoryParam } = await params;
-  
-  const { addToCart } = useCart();
+export default function TapeMaterialenListing({ params }:  { params: Promise<{ category: string }> }) {
+  const categoryParam =  use(params);
+  console.log("testing what is in the params: "+categoryParam.category);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState('name-asc');
-  const [categoryList, setCategoryList] = useState<{ id: number; name: string; image: string; path: string }[]>([]);
-
+ 
   // Add sorting function
   const sortProducts = (products: Product[], option: string) => {
     const sortedProducts = [...products];
@@ -39,64 +38,37 @@ export default async function TapeMaterialenListing({ params }: { params: Promis
     }
   };
 
-  // Fetch categories
-  useEffect(() => {
-    async function fetchCategories() {
-      console.log('Fetching categories...');
-      try {
-        const res = await fetch("/api/categories");
-        console.log('Categories response:', res);
-        const data = await res.json();
-        console.log('Categories data:', data);
-        setCategoryList(data);
-        
-        // If we have the category param, fetch products immediately
-        if (categoryParam) {
-          console.log('Found category param, fetching products for:', categoryParam);
-          fetchProductsByCategory(categoryParam);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    }
-    fetchCategories();
-  }, []);
 
-  // Fetch products based on the category
-  const fetchProductsByCategory = async (categoryName: string) => {
-    console.log('Fetching products for category:', categoryName);
+  const fetchProductsByCategory = async (categorySlug: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/categories/${encodeURIComponent(categoryName)}/products`);
+      const res = await fetch(`/api/categories/${encodeURIComponent(categorySlug)}/products`);
       console.log('Products response:', res);
       if (res.ok) {
         const data = await res.json();
-        console.log('Products data:', data);
         setProducts(data);
       } else {
-        console.error('Failed to fetch products:', res.status, res.statusText);
         setError('Failed to fetch products');
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
       setError('Error fetching products');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch products when the category changes
+  // Fetch products when categoryParam changes
   useEffect(() => {
-    if (categoryParam && categoryList.length > 0) {
+    if (categoryParam) {
       console.log('Category param changed, fetching products for:', categoryParam);
-      fetchProductsByCategory(categoryParam);
+      fetchProductsByCategory(categoryParam.category);
     }
-  }, [categoryParam, categoryList]);
+  }, [categoryParam]); // Only trigger when categoryParam changes
 
   return (
     <div>
       <div className="max-w-7xl mx-auto p-4">
-        <h1 className="text-5xl font-bold mb-8">{categoryParam}</h1>
+        <h1 className="text-5xl font-bold mb-8">{categoryParam.category}</h1>
 
         <div className="flex flex-col md:flex-row gap-8">
           {/* Filters sidebar */}
@@ -104,7 +76,6 @@ export default async function TapeMaterialenListing({ params }: { params: Promis
             {/* Add your filters here */}
           </div>
 
-          {/* Product listing */}
           <div className="flex-1">
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center">
@@ -125,10 +96,9 @@ export default async function TapeMaterialenListing({ params }: { params: Promis
               <span>{products.length} producten</span>
             </div>
 
-            {/* Loading state */}
             {loading && <p>Loading products...</p>}
 
-            {/* Product grid */}
+
             {!loading && products.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                 {sortProducts(products, sortOption).map((product) => (
@@ -143,9 +113,11 @@ export default async function TapeMaterialenListing({ params }: { params: Promis
                         href={`/products/${product.id}`} 
                         className="font-bold text-sm hover:text-blue-600 transition-colors"
                       >
-                        <img
+                        <Image
                           src={product.image}
                           alt={product.name}
+                            width={200}
+                             height={128}
                           className="w-full h-32 object-contain p-2"
                         />
                       </Link>

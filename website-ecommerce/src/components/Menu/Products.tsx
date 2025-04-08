@@ -23,7 +23,7 @@ export function ProductCategories() {
 
   return (
     <div className="container mx-auto py-12 px-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
         {categories.map((category) => (
           <div key={category.id} className="relative flex justify-center">
             {/* Product Image */}

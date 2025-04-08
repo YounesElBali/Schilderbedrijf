@@ -62,7 +62,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
 
       {/* Sliding Panel */}
       <div
-        className={`fixed top-6 right-0 w-96 h-full bg-[#ededed] shadow-lg transition-all transform  ${
+        className={`fixed top-6 right-0 w-96 h-full bg-[#ededed] z-50 shadow-lg transition-all transform  ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -137,7 +137,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
             <div className="mt-6">
               <Link href="/checkout">
                 <button 
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  className="w-full bg-[#d6ac0a] text-black py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                   onClick={closeModal}
                 >
                   Ga naar kassa
