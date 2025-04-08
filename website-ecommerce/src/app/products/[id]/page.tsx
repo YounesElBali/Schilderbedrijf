@@ -13,7 +13,7 @@ interface Product {
   inStock: boolean;
 }
 
-export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ProductPage({ params }: { params: Promise<{ id: number }> }) {
   const { id } = use(params);
   const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
