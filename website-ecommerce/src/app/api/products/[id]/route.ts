@@ -32,6 +32,47 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const productId = (await params).id;
+    const idNumber = parseInt(productId);
+    
+    if (isNaN(idNumber)) {
+      return NextResponse.json(
+        { message: "Invalid product ID" },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const { name, description, price, image, categoryId, isNew, inStock } = body;
+
+    const product = await prisma.product.update({
+      where: { id: idNumber },
+      data: {
+        name,
+        description,
+        price,
+        image,
+        categoryId,
+        isNew,
+        inStock,
+      },
+    });
+
+    return NextResponse.json(product);
+  } catch (error) {
+    console.error("Error updating product:", error);
+    return NextResponse.json(
+      { message: "Error updating product" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

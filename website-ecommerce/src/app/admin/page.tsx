@@ -9,6 +9,11 @@ interface Category {
   image: string;
   path: string;
 }
+interface OrderItem {
+  productId: number;
+  quantity: number;
+  product: Product; // assuming API sends full product details
+}
 
 interface Product {
   id: number;
@@ -27,6 +32,7 @@ interface Order {
   totalPrice: number;
   status: string;
   createdAt: string;
+  items: OrderItem[];
   shippingAddress: {
     firstName: string;
     lastName: string;
@@ -45,6 +51,7 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     // Check if user is admin
@@ -192,6 +199,47 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const imageFile = formData.get("image") as File;
+
+    try {
+      let imagePath = editingProduct?.image;
+      
+      // Only upload new image if one is selected
+      if (imageFile.size > 0) {
+        imagePath = await handleImageUpload(imageFile);
+        if (!imagePath) return;
+      }
+
+      const res = await fetch(`/api/products/${editingProduct?.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.get("name"),
+          description: formData.get("description"),
+          price: parseFloat(formData.get("price") as string),
+          image: imagePath,
+          categoryId: parseInt(formData.get("categoryId") as string),
+          isNew: formData.get("isNew") === "true",
+          inStock: formData.get("inStock") === "true",
+        }),
+      });
+
+      if (res.ok) {
+        const updatedProduct = await res.json();
+        setProducts(products.map(product => 
+          product.id === updatedProduct.id ? updatedProduct : product
+        ));
+        setEditingProduct(null);
+      }
+    } catch (error) {
+      console.error("Error updating product:", error);
+      setUploadError("Failed to update product");
+    }
+  };
+
   const handleUpdateOrderStatus = async (orderId: number, newStatus: string) => {
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
@@ -281,7 +329,7 @@ export default function AdminDashboard() {
           onClick={() => setActiveTab("categories")}
           className={`px-4 py-2 rounded ${
             activeTab === "categories"
-              ? "bg-indigo-600 text-white"
+              ? "bg-[#d6ac0a] text-black"
               : "bg-gray-200"
           }`}
         >
@@ -291,7 +339,7 @@ export default function AdminDashboard() {
           onClick={() => setActiveTab("products")}
           className={`px-4 py-2 rounded ${
             activeTab === "products"
-              ? "bg-indigo-600 text-white"
+              ? "bg-[#d6ac0a] text-black"
               : "bg-gray-200"
           }`}
         >
@@ -301,7 +349,7 @@ export default function AdminDashboard() {
           onClick={() => setActiveTab("orders")}
           className={`px-4 py-2 rounded ${
             activeTab === "orders"
-              ? "bg-indigo-600 text-white"
+              ? "bg-[#d6ac0a] text-black"
               : "bg-gray-200"
           }`}
         >
@@ -311,10 +359,10 @@ export default function AdminDashboard() {
 
       {activeTab === "categories" && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Add New Category</h2>
+          <h2 className="text-xl font-semibold mb-4">voeg nieuwe categorie toe</h2>
           <form onSubmit={handleAddCategory} className="space-y-4 mb-8">
             <div>
-              <label className="block mb-1">Name</label>
+              <label className="block mb-1">Naam</label>
               <input
                 type="text"
                 name="name"
@@ -323,7 +371,7 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
-              <label className="block mb-1">Image</label>
+              <label className="block mb-1">Afbeelding</label>
               <input
                 type="file"
                 name="image"
@@ -333,7 +381,7 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
-              <label className="block mb-1">Path</label>
+              <label className="block mb-1">Route</label>
               <input
                 type="text"
                 name="path"
@@ -349,8 +397,8 @@ export default function AdminDashboard() {
             </button>
           </form>
 
-          <h2 className="text-xl font-semibold mb-4">Categories List</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <h2 className="text-xl font-semibold mb-4">Categorie lijst</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             {categories.map((category) => (
               <div
                 key={category.id}
@@ -385,51 +433,63 @@ export default function AdminDashboard() {
 
       {activeTab === "products" && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Add New Product</h2>
-          <form onSubmit={handleAddProduct} className="space-y-4 mb-8">
+          <h2 className="text-xl font-semibold mb-4">
+            {editingProduct ? "Edit Product" : "Add New Product"}
+          </h2>
+          <form onSubmit={editingProduct ? handleEditProduct : handleAddProduct} className="space-y-4 mb-8">
             <div>
-              <label className="block mb-1">Name</label>
+              <label className="block mb-1">Naam</label>
               <input
                 type="text"
                 name="name"
                 required
-                className="w-full p-2 border rounded"
+                defaultValue={editingProduct?.name}
+                className="w-1/5 p-2 border rounded"
               />
             </div>
             <div>
-              <label className="block mb-1">Description</label>
-              <textarea
-                name="description"
-                required
-                className="w-full p-2 border rounded"
-              />
-            </div>
-            <div>
-              <label className="block mb-1">Price</label>
+              <label className="block mb-1">Prijs</label>
               <input
                 type="number"
                 name="price"
                 step="0.01"
                 required
-                className="w-full p-2 border rounded"
+                defaultValue={editingProduct?.price}
+                className="w-1/5 p-2 border rounded"
               />
             </div>
             <div>
-              <label className="block mb-1">Image</label>
+              <label className="block mb-1">Beschrijving</label>
+              <textarea
+                name="description"
+                required
+                defaultValue={editingProduct?.description}
+                className="w-1/3 p-2 border rounded"
+              />
+            </div>
+            
+            <div>
+              <label className="block mb-1">Afbeelding</label>
               <input
                 type="file"
                 name="image"
                 accept="image/*"
-                required
-                className="w-full p-2 border rounded"
+                required={!editingProduct}
+                className="w-1/5 p-2 border rounded"
               />
+              {editingProduct && (
+                <p className="text-sm text-gray-600 mt-1">
+                  Current image: {editingProduct.image}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block mb-1">Category</label>
+              <label className="block mb-1">Categorie</label>
               <select
                 name="categoryId"
                 required
-                className="w-full p-2 border rounded"
+                defaultValue={editingProduct?.categoryId}
+                className="w-1/5 p-2 border rounded"
               >
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
@@ -444,30 +504,43 @@ export default function AdminDashboard() {
                   type="checkbox"
                   name="isNew"
                   value="true"
+                  defaultChecked={editingProduct?.isNew}
                   className="mr-2"
                 />
-                New Product
+                Nieuw product
               </label>
               <label className="flex items-center">
                 <input
                   type="checkbox"
                   name="inStock"
                   value="true"
+                  defaultChecked={editingProduct?.inStock}
                   className="mr-2"
                 />
-                In Stock
+                In voorraad
               </label>
             </div>
-            <button
-              type="submit"
-              className="bg-indigo-600 text-white px-4 py-2 rounded"
-            >
-              Add Product
-            </button>
+            <div className="flex space-x-4">
+              <button
+                type="submit"
+                className="bg-indigo-600 text-white px-4 py-2 rounded"
+              >
+                {editingProduct ? "Update Product" : "Add Product"}
+              </button>
+              {editingProduct && (
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
+                  className="bg-gray-200 px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </form>
 
-          <h2 className="text-xl font-semibold mb-4">Products List</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <h2 className="text-xl font-semibold mb-4">Product Lijst</h2>
+          <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-6 gap-4">
             {products.map((product) => (
               <div
                 key={product.id}
@@ -484,31 +557,38 @@ export default function AdminDashboard() {
                 <div className="flex space-x-2 mt-2">
                   {product.isNew && (
                     <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                      New
+                      Nieuw
                     </span>
                   )}
                   {product.inStock ? (
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                      In Stock
+                      In voorraad
                     </span>
                   ) : (
                     <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
-                      Out of Stock
+                      Niet in voorraad
                     </span>
                   )}
                 </div>
-                <div className="flex space-x-2 mt-2">
+                <div className="flex space-x-2 mt-4">
+                  <button
+                    onClick={() => setEditingProduct(product)}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    Wijzig product
+                  </button>
+                  
                   <button
                     onClick={() => handleDeleteImage(product.image)}
                     className="text-red-600 hover:text-red-800"
                   >
-                    Delete Image
+                    Verwijder afbeelding
                   </button>
                   <button
                     onClick={() => handleDeleteProduct(product.id, product.image)}
                     className="text-red-600 hover:text-red-800"
                   >
-                    Delete Product
+                    Verwijder Product
                   </button>
                 </div>
               </div>
@@ -517,49 +597,64 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === "orders" && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Orders List</h2>
-          <div className="space-y-4">
-            {orders.map((order) => (
-              <div
-                key={order.id}
-                className="border rounded p-4"
+{activeTab === "orders" && (
+  <div>
+    <h2 className="text-xl font-semibold mb-4">Orders Lijst</h2>
+    <div className="space-y-4 w-1/5">
+      {orders.map((order) => (
+        <div key={order.id} className="border rounded p-4">
+          <div className="space-y-2">
+            
+            {/* 1. Order ID */}
+            <p className="font-semibold text-lg">Order #{order.id} Date of order: {new Date(order.createdAt).toLocaleDateString()} </p>
+
+            {/* 3. Ordered Products */}
+            <div>
+              <p className="font-semibold mb-1">Ordered Products:</p>
+              <ul className="list-disc list-inside text-sm text-gray-700">
+                {order.items?.map((item, idx) => (
+                  <li key={idx}>
+                    {item?.product?.name} – Quantity: {item?.quantity} – €{((item?.product?.price || 0) * (item?.quantity || 0)).toFixed(2)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* 4. Total Price */}
+            <p className="font-semibold text-lg">
+              Total: €{order.totalPrice}
+            </p>
+
+            {/* 5. Username & Address */}
+            <div className="text-sm text-gray-600">
+              <p className="font-semibold text-lg">Gebruiker:</p>
+              <p>{order.shippingAddress.firstName} {order.shippingAddress.lastName}</p>
+              <p>{order.shippingAddress.street}</p>
+              <p>{order.shippingAddress.postalCode} {order.shippingAddress.city}</p>
+            </div>
+
+            {/* 6. Status Dropdown */}
+            <div>
+              <select
+                value={order.status}
+                onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                className="p-2 border rounded w-full sm:w-auto"
               >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-semibold">Order #{order.id}</p>
-                    <p className="text-sm text-gray-600">
-                      Total: €{order.totalPrice}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Date: {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">
-                      Gebruikers adres: {order.shippingAddress.street}, {order.shippingAddress.postalCode} {order.shippingAddress.city}
-                    </p>
-                  </div>
-                  <div>
-                    <select
-                      value={order.status}
-                      onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                      className="p-2 border rounded"
-                    >
-                      <option value="PENDING">Pending</option>
-                      <option value="PROCESSING">Processing</option>
-                      <option value="SHIPPED">Shipped</option>
-                      <option value="DELIVERED">Delivered</option>
-                      <option value="CANCELLED">Cancelled</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            ))}
+                <option value="PENDING">Pending</option>
+                <option value="PROCESSING">Processing</option>
+                <option value="SHIPPED">Shipped</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+
           </div>
         </div>
-      )}
+      ))}
+    </div>
+  </div>
+)}
+
     </div>
   );
 } 
