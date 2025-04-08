@@ -3,14 +3,15 @@ import prisma from '@/lib/prisma';
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const productId = (await params).id;
+    const idNumber = parseInt(productId);
     
 
     const product = await prisma.product.findUnique({
-      where: { id: productId },
+      where: { id: idNumber },
       include: { category: true }
     });
     
@@ -33,12 +34,13 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const productId = (await params).id;
+    const idNumber = parseInt(productId);
 
-    if (isNaN(productId)) {
+    if (isNaN(idNumber)) {
       return NextResponse.json(
         { message: "Invalid product ID" },
         { status: 400 }
@@ -46,7 +48,7 @@ export async function DELETE(
     }
 
     const product = await prisma.product.findUnique({
-      where: { id: productId },
+      where: { id: idNumber },
     });
 
     if (!product) {
@@ -57,7 +59,7 @@ export async function DELETE(
     }
 
     await prisma.product.delete({
-      where: { id: productId },
+        where: { id: idNumber },
     });
 
     return NextResponse.json({ 
