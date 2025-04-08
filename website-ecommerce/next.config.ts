@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  async rewrites() {
+    return [
+      {
+        source: '/images/:path*',
+        destination: '/uploads/images/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
