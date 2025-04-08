@@ -12,7 +12,7 @@ interface Product {
 }
 
 export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeModal: () => void }) {
-  const { cart, removeFromCart } = useCart();
+  const { cart, removeFromCart, updateQuantity } = useCart();
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,6 +55,8 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
     fetchRecommendedProducts();
   }, [cart]);
 
+  const totalPrice = cart.reduce((total, item) => total + item.price * (item.quantity ?? 1), 0);
+
   return (
     <>
       {/* Overlay (Background Dim) */}
@@ -93,6 +95,19 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
                 <div className="flex-grow">
                   <h4 className="font-bold">{item.name}</h4>
                   <p className="text-xl font-semibold mt-2">€{item.price.toFixed(2)}</p>
+                  <div className="mt-2">
+                    <label htmlFor={`quantity-${item.id}`} className="mr-2 text-sm">
+                      Hoeveelheid:
+                    </label>
+                    <input
+                      type="number"
+                      id={`quantity-${item.id}`}
+                      value={item.quantity}
+                      min={1}
+                      onChange={(e) => updateQuantity(item.id.toString(), parseInt(e.target.value))}
+                      className="w-16 px-2 py-1 border rounded-md"
+                    />
+                  </div>
                 </div>
                 <div className="self-end">
                   <button
@@ -104,6 +119,12 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
                 </div>
               </div>
             ))}
+
+             {/* Total Price */}
+             <div className="mt-6 flex justify-between items-center font-semibold">
+              <span className="text-lg">Totaal:</span>
+              <span className="text-2xl">€{totalPrice.toFixed(2)}</span>
+            </div>
 
             {/* Recommended Products */}
             {!isLoading && recommendedProducts.length > 0 && (
