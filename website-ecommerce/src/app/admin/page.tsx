@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 interface Category {
@@ -12,7 +12,8 @@ interface Category {
 interface OrderItem {
   productId: number;
   quantity: number;
-  product: Product; // assuming API sends full product details
+  price: number;
+  product: Product;
 }
 
 interface Product {
@@ -24,6 +25,19 @@ interface Product {
   isNew: boolean;
   inStock: boolean;
   categoryId: number;
+  deliveryCost: number;
+}
+
+interface ShippingAddress {
+  firstName: string;
+  lastName: string;
+  company?: string;
+  street: string;
+  vatNumber?: string;
+  postalCode: string;
+  city: string;
+  phone: string;
+  country: string;
 }
 
 interface Order {
@@ -33,14 +47,9 @@ interface Order {
   status: string;
   createdAt: string;
   items: OrderItem[];
-  shippingAddress: {
-    firstName: string;
-    lastName: string;
-    street: string;
-    postalCode: string;
-    city: string;
-    country: string;
-  };
+  orderItems: OrderItem[];
+  shippingAddress: string;
+  shippingParsed: ShippingAddress;
 }
 
 export default function AdminDashboard() {
@@ -185,6 +194,7 @@ export default function AdminDashboard() {
           categoryId: parseInt(formData.get("categoryId") as string),
           isNew: formData.get("isNew") === "true",
           inStock: formData.get("inStock") === "true",
+          deliveryCost: parseFloat(formData.get("deliveryCost") as string),
         }),
       });
 
@@ -224,6 +234,7 @@ export default function AdminDashboard() {
           categoryId: parseInt(formData.get("categoryId") as string),
           isNew: formData.get("isNew") === "true",
           inStock: formData.get("inStock") === "true",
+          deliveryCost: parseFloat(formData.get("deliveryCost") as string),
         }),
       });
 
@@ -309,6 +320,30 @@ export default function AdminDashboard() {
       setUploadError("Failed to delete product");
     }
   };
+
+  const processedOrders = useMemo(() => {
+    return orders.map((order) => {
+      let shipping: ShippingAddress = {
+        firstName: '',
+        lastName: '',
+        street: '',
+        postalCode: '',
+        city: '',
+        phone: '',
+        country: 'Nederland'
+      };
+      try {
+        shipping = JSON.parse(order.shippingAddress.toString());
+      } catch (err) {
+        console.error("Invalid JSON in shippingAddress for order", order.id, err);
+      }
+      return {
+        ...order,
+        shippingParsed: shipping,
+      };
+    });
+  }, [orders]);
+  
 
   if (isLoading) {
     return <div className="p-4">Loading...</div>;
@@ -459,6 +494,17 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
+              <label className="block mb-1">Verzendkosten</label>
+              <input
+                type="number"
+                name="deliveryCost"
+                step="0.01"
+                required
+                defaultValue={editingProduct?.deliveryCost || 6.95}
+                className="w-1/5 p-2 border rounded"
+              />
+            </div>
+            <div>
               <label className="block mb-1">Beschrijving</label>
               <textarea
                 name="description"
@@ -600,40 +646,71 @@ export default function AdminDashboard() {
 {activeTab === "orders" && (
   <div>
     <h2 className="text-xl font-semibold mb-4">Orders Lijst</h2>
-    <div className="space-y-4 w-1/5">
-      {orders.map((order) => (
+    <div className="space-y-4 w-4/5">
+      {processedOrders.map((order) => (
         <div key={order.id} className="border rounded p-4">
           <div className="space-y-2">
-            
-            {/* 1. Order ID */}
-            <p className="font-semibold text-lg">Order #{order.id} Date of order: {new Date(order.createdAt).toLocaleDateString()} </p>
-
-            {/* 3. Ordered Products */}
-            <div>
-              <p className="font-semibold mb-1">Ordered Products:</p>
-              <ul className="list-disc list-inside text-sm text-gray-700">
-                {order.items?.map((item, idx) => (
-                  <li key={idx}>
-                    {item?.product?.name} – Quantity: {item?.quantity} – €{((item?.product?.price || 0) * (item?.quantity || 0)).toFixed(2)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* 4. Total Price */}
             <p className="font-semibold text-lg">
-              Total: €{order.totalPrice}
+              Order #{order.id} – Date: {new Date(order.createdAt).toLocaleDateString()}
             </p>
 
-            {/* 5. Username & Address */}
-            <div className="text-sm text-gray-600">
-              <p className="font-semibold text-lg">Gebruiker:</p>
-              <p>{order.shippingAddress.firstName} {order.shippingAddress.lastName}</p>
-              <p>{order.shippingAddress.street}</p>
-              <p>{order.shippingAddress.postalCode} {order.shippingAddress.city}</p>
+            {/* Ordered Products */}
+            <div>
+              <p className="font-semibold mb-1">Bestelde Producten:</p>
+              <div className="border rounded p-4 bg-white">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2">Product</th>
+                      <th className="text-right py-2">Aantal</th>
+                      <th className="text-right py-2">Prijs per stuk</th>
+                      <th className="text-right py-2">Totaal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {order.orderItems?.map((item: OrderItem, idx: number) => (
+                      <tr key={idx} className="border-b">
+                        <td className="py-2">
+                          <div className="flex items-center">
+                            <img 
+                              src={item.product.image} 
+                              alt={item.product.name}
+                              className="w-12 h-12 object-contain mr-3"
+                            />
+                            <div>
+                              <p className="font-medium">{item.product.name}</p>
+                              <p className="text-sm text-gray-500">{item.product.description}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-right py-2">{item.quantity}</td>
+                        <td className="text-right py-2">€{item.price.toFixed(2)}</td>
+                        <td className="text-right py-2">€{(item.price * item.quantity).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="font-bold">
+                      <td colSpan={3} className="text-right py-2">Totaal:</td>
+                      <td className="text-right py-2">€{order.totalPrice.toFixed(2)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
 
-            {/* 6. Status Dropdown */}
+            {/* User Info */}
+            <div className="text-sm text-gray-600">
+              <p className="font-semibold text-lg">Gebruiker:</p>
+              <p>Voornaam:{order.shippingParsed.firstName} Achternaam:{order.shippingParsed.lastName}</p>
+              {order.shippingParsed.company && (
+                <p>Bedrijf: {order.shippingParsed.company}</p>
+              )}
+              <p>Straatnaam:{order.shippingParsed.street} Postcode:{order.shippingParsed.postalCode} Plaats:{order.shippingParsed.city}</p>
+              <p>Telefoon: {order.shippingParsed.phone}</p>
+            </div>
+
+            {/* Status */}
             <div>
               <select
                 value={order.status}
@@ -647,7 +724,6 @@ export default function AdminDashboard() {
                 <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
-
           </div>
         </div>
       ))}

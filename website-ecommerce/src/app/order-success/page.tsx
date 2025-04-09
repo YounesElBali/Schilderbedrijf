@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 interface OrderDetails {
   id: number;
   totalPrice: number;
+  deliveryCost: number;
   createdAt: string;
 }
 
@@ -77,6 +78,16 @@ export default function OrderSuccessPage() {
               <div className="flex justify-between text-gray-600">
                 <span>Datum:</span>
                 <span>{new Date(orderDetails.createdAt).toLocaleDateString('nl-NL')}</span>
+              </div>
+              <div className="flex justify-between text-gray-600 mt-2">
+                <span>Verzendkosten:</span>
+                <span>
+                  {orderDetails.deliveryCost === 0 ? (
+                    <span className="text-green-600">Gratis</span>
+                  ) : (
+                    `€${orderDetails.deliveryCost.toFixed(2)}`
+                  )}
+                </span>
               </div>
               <div className="flex justify-between text-gray-600 mt-2">
                 <span>Totaalbedrag:</span>

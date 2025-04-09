@@ -5,11 +5,12 @@ const prisma = new PrismaClient();
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { status } = await request.json();
     const orderId = (await params).id;
+    const idNumber = parseInt(orderId);
 
     if (!status) {
       return NextResponse.json(
@@ -19,7 +20,7 @@ export async function PATCH(
     }
 
     const order = await prisma.order.update({
-      where: { id: orderId },
+      where: { id: idNumber },
       data: { status },
       include: {
         user: true,
@@ -33,6 +34,7 @@ export async function PATCH(
 
     return NextResponse.json(order);
   } catch (error) {
+    console.error("Error updating order status:", error);
     return NextResponse.json(
       { message: "Error updating order status" },
       { status: 500 }
@@ -42,12 +44,13 @@ export async function PATCH(
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const orderId = (await params).id;
+    const idNumber = parseInt(orderId);
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: { id: idNumber },
       select: {
         id: true,
         totalPrice: true,

@@ -24,8 +24,8 @@ export async function POST(request: Request) {
         email,
         totalPrice: parseFloat(totalPrice),
         status: 'PENDING',
-        shippingAddress: shippingAddress,
-        billingAddress: billingAddress,
+        shippingAddress: shippingAddress.toString(),
+        billingAddress: billingAddress.toString(),
         paymentMethod,
         orderItems: {
           create: items.map((item: any) => ({

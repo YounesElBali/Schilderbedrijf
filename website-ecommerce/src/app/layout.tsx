@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "../contexts/CartContext";
 import {Banner} from "../components/Menu/Banner";
-
+import Footer from "../components/Footer/Footer";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pastoolz",
-  description: "homePage of Pastoolz",
+  title: "PAStoolz",
+  description: "homePage of PAStoolz",
 };
 
 export default function RootLayout({
@@ -30,11 +30,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         
-       
+        <div className="flex flex-col min-h-screen">
           <CartProvider>
             <Banner />
-            {children}
+            <main className="flex-grow">{children}</main>
+            <Footer />
           </CartProvider>
+        </div>
       </body>
     </html>
   );

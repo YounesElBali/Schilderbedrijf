@@ -39,7 +39,7 @@ export function Banner() {
           <Link href="/">
           <img 
             src="/logoPastoolz.png" 
-            alt="Pastoolz" 
+            alt="PAStoolz" 
             className="h-16"
           />
           </Link>
