@@ -10,6 +10,25 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [isGuestCheckout, setIsGuestCheckout] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [deliveryCost, setDeliveryCost] = useState(0);
+
+  // Calculate total delivery cost based on products and threshold
+  const calculateDeliveryCost = () => {
+    const total = getTotalPrice();
+    if (total >= 80) return 0;
+
+    // Sum up delivery costs for each product
+    const totalDeliveryCost = cart.reduce((sum, item) => {
+      return sum + (item.deliveryCost || 6.95);
+    }, 0);
+
+    return totalDeliveryCost;
+  };
+
+  // Update delivery cost whenever cart changes
+  useEffect(() => {
+    setDeliveryCost(calculateDeliveryCost());
+  }, [cart]);
 
   // Get user data from localStorage
   useEffect(() => {
@@ -62,10 +81,11 @@ export default function CheckoutPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId, // Guest or logged-in user
+          userId,
           items: cart,
-          totalPrice: getTotalPrice(),
-          shippingAddress: JSON.stringify(shippingAddress), // ✅ convert to string
+          totalPrice: getTotalPrice() + calculateDeliveryCost(),
+          deliveryCost: deliveryCost,
+          shippingAddress: JSON.stringify(shippingAddress),
           billingAddress: JSON.stringify(billingAddress), 
           paymentMethod: 'ideal',
           paymentId,
@@ -111,7 +131,7 @@ export default function CheckoutPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          totalPrice: getTotalPrice().toFixed(2),
+          totalPrice: (getTotalPrice() + calculateDeliveryCost()).toFixed(2),
           email,
           items: cart,
         }),
@@ -119,8 +139,18 @@ export default function CheckoutPage() {
   
       if (!paymentResponse.ok) throw new Error('Payment creation failed');
   
-      const { paymentUrl } = await paymentResponse.json();
-  
+      const { paymentUrl,error, redirectToCheckout } = await paymentResponse.json();
+     
+      if (error) {
+        // If there's an error (e.g., failed payment creation), handle it here
+        if (redirectToCheckout) {
+          // Redirect to the checkout page if needed
+          router.push('/checkout');
+        } else {
+          setError('Er is een fout opgetreden tijdens het starten van de betaling.');
+        }
+        return;
+      }
       // Step 2: Redirect to Mollie payment page
       window.location.href = paymentUrl;
     } catch (error) {
@@ -307,13 +337,21 @@ export default function CheckoutPage() {
             <span className="text-gray-600">
               Ik ga akkoord met de&nbsp;
             </span>
-            <Link href="/voorwaarden" className="text-gray-600">
+            <Link href="/terms" className="text-gray-600">
             <span className="text-blue-600">
-               voorwaarden
+               voorwaarden&nbsp;
+            </span>
+            </Link>
+            <span className="text-blue-600">
+               en
+            </span>
+            <Link href="/privacy" className="text-gray-600">
+            <span className="text-blue-600">
+               privacybeleid
             </span>
             </Link>
           </div>
-
+        
           {/* Submit button */}
           <button
             type="submit"
@@ -339,13 +377,29 @@ export default function CheckoutPage() {
                 <div>
                   <p>{item.name}</p>
                   <p className="text-sm text-gray-600">Aantal: {item.quantity}</p>
+                  <p className="text-sm text-gray-600">Verzendkosten: €{(item.deliveryCost || 6.95).toFixed(2)} </p>
                 </div>
                 <p>€{(item.price * (item.quantity || 1)).toFixed(2)}</p>
               </div>
             ))}
+            <div className="flex justify-between border-b pb-3 mb-3">
+              <span>Verzendkosten</span>
+              <span>
+                {deliveryCost === 0 ? (
+                  <span className="text-green-600">Gratis</span>
+                ) : (
+                  `€${deliveryCost.toFixed(2)}`
+                )}
+              </span>
+            </div>
+            {getTotalPrice() < 80 && (
+              <p className="text-sm text-green-600 mb-2">
+                Bestel voor €{(80 - getTotalPrice()).toFixed(2)} meer om gratis verzending te krijgen
+              </p>
+            )}
             <div className="flex justify-between font-bold">
               <span>Totaal</span>
-              <span>€{getTotalPrice().toFixed(2)}</span>
+              <span>€{(getTotalPrice() + deliveryCost).toFixed(2)}</span>
             </div>
           </>
         )}

@@ -12,7 +12,10 @@ export async function GET(
 
     const product = await prisma.product.findUnique({
       where: { id: idNumber },
-      include: { category: true }
+      include: { 
+        category: true,
+        variants: true // Include variants in the response
+      }
     });
     
     if (!product) {
