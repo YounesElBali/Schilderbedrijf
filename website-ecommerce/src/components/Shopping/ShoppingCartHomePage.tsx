@@ -22,7 +22,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
         setIsLoading(false);
         return;
       }
-  
+
       try {
         // Fetch 3 random products
         const response = await fetch('/api/products/recommended', {
@@ -31,11 +31,11 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
             'Content-Type': 'application/json',
           },
         });
-  
+
         if (!response.ok) {
           throw new Error('Failed to fetch random products');
         }
-  
+
         const data = await response.json();
         setRecommendedProducts(data);
       } catch (error) {
@@ -44,10 +44,9 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
         setIsLoading(false);
       }
     };
-  
+
     fetchRecommendedProducts();
   }, [cart]);
-  
 
   const totalPrice = cart.reduce((total, item) => total + item.price * (item.quantity ?? 1), 0);
 
@@ -64,7 +63,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
       >
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center">
-          <br/>
+          <br />
           <h2 className="text-2xl font-bold">Winkelwagen • {cart.length}</h2>
           <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -79,7 +78,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
         ) : (
           <div className="p-4">
             <h3 className="text-xl font-bold mb-4">Jouw Producten</h3>
-            
+
             {/* Cart Items */}
             {cart.map((item) => (
               <div key={`${item.id}-${item.variantId || 'base'}`} className="border rounded-sm p-4 mb-4 flex">
@@ -115,53 +114,57 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
               </div>
             ))}
 
-             {/* Total Price */}
-             <div className="mt-6 flex justify-between items-center font-semibold">
+            {/* Total Price */}
+            <div className="mt-6 flex justify-between items-center font-semibold">
               <span className="text-lg">Totaal:</span>
               <span className="text-2xl">€{totalPrice.toFixed(2)}</span>
             </div>
-
-            {/* Recommended Products */}
-            {!isLoading && recommendedProducts.length >= 0 && (
-              <div className="mt-8">
-                <h3 className="text-xl font-bold mb-4">Aanbevolen voor jou</h3>
-                <div className="space-y-4">
-                  {recommendedProducts.map((product) => (
-                    <div key={product.id} className="border rounded-sm p-4 flex items-center">
-                      <div className="w-16 h-16 bg-gray-100 mr-4 flex items-center justify-center">
-                        <img src={product.image} alt={product.name} className="max-w-full max-h-full" />
-                      </div>
-                      <div className="flex-grow">
-                        <h4 className="font-medium">{product.name}</h4>
-                        <p className="text-lg font-semibold mt-1">€{product.price.toFixed(2)}</p>
-                      </div>
-                      <Link href={`/products/${product.id}`}>
-                        <button 
-                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-                          onClick={closeModal}
-                        >
-                          Bekijken
-                        </button>
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Checkout Button */}
-            <div className="mt-6">
-              <Link href="/checkout">
-                <button 
-                  className="w-full bg-[#d6ac0a] text-black py-3 rounded-lg font-medium hover:bg-[#000000] hover:text-white transition-colors"
-                  onClick={closeModal}
-                >
-                  Ga naar kassa
-                </button>
-              </Link>
-            </div>
           </div>
         )}
+
+        <div className="mt-6">
+          <Link href="/checkout">
+            <button 
+              className="w-full bg-[#d6ac0a] text-black py-3 rounded-lg font-medium hover:bg-[#000000] hover:text-white transition-colors"
+              onClick={closeModal}
+            >
+              Ga naar kassa
+            </button>
+          </Link>
+        </div>
+
+        {/* Recommended Products (Always visible) */}
+        <div className="mt-8">
+          <h3 className="text-xl font-bold mb-4">Aanbevolen voor jou</h3>
+          <div className="space-y-4">
+            {!isLoading ? (
+              recommendedProducts.map((product) => (
+                <div key={product.id} className="border rounded-sm p-4 flex items-center">
+                  <div className="w-16 h-16 bg-gray-100 mr-4 flex items-center justify-center">
+                    <img src={product.image} alt={product.name} className="max-w-full max-h-full" />
+                  </div>
+                  <div className="flex-grow">
+                    <h4 className="font-medium">{product.name}</h4>
+                    <p className="text-lg font-semibold mt-1">€{product.price.toFixed(2)}</p>
+                  </div>
+                  <Link href={`/products/${product.id}`}>
+                    <button 
+                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                      onClick={closeModal}
+                    >
+                      Bekijken
+                    </button>
+                  </Link>
+                </div>
+              ))
+            ) : (
+              <div>Loading recommended products...</div>
+            )}
+          </div>
+        </div>
+
+        {/* Checkout Button */}
+       
       </div>
     </>
   );

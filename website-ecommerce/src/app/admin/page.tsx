@@ -883,7 +883,7 @@ export default function AdminDashboard() {
                             <div>
                               <p className="font-medium">{item.product.name}</p>
                               <p className="text-sm text-gray-500">Artikelnummer: {item.product.articlenr}</p>
-                              <p className="text-sm text-gray-500">{item.variant.name}</p>
+                              {/* <p className="text-sm text-gray-500">{item.variant.name}</p> */}
                             </div>
                           </div>
                         </td>
