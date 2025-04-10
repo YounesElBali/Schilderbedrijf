@@ -8,6 +8,7 @@ interface Product {
   name: string;
   price: number;
   image: string;
+  articlenr:number;
   quantity?: number;
   variantId?: number;
   variantName?: string;

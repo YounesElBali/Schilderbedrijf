@@ -4,10 +4,11 @@ import prisma from '@/lib/prisma';
 // GET all variants for a product
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const productId = parseInt(params.id);
+    const { id } = await params;
+    const productId = parseInt(id);
     
     if (isNaN(productId)) {
       return NextResponse.json(
@@ -33,10 +34,11 @@ export async function GET(
 // POST a new variant for a product
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }>  }
 ) {
   try {
-    const productId = parseInt(params.id);
+    const { id } = await params;
+    const productId = parseInt(id);
     
     if (isNaN(productId)) {
       return NextResponse.json(
@@ -59,6 +61,7 @@ export async function POST(
         productId,
         name,
         price: price || undefined,
+        inStock: true,
       },
     });
 

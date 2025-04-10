@@ -27,6 +27,7 @@ interface Product {
   description: string;
   isNew: boolean;
   inStock: boolean;
+  articlenr: number;
   images: ProductImage[];
   variants?: ProductVariant[];
 }
@@ -86,6 +87,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         price: selectedVariant?.price || product.price,
         image: product.image,
         quantity: quantity,
+        articlenr: product.articlenr,
         variantId: selectedVariant?.id,
         variantName: selectedVariant?.name
       });
@@ -238,7 +240,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             <div className="border-t pt-6">
               <h2 className="text-lg font-semibold mb-2">Product Details</h2>
               <ul className="list-disc list-inside text-gray-600 space-y-2">
-                <li>Artikelnummer: {product.id}</li>
+                <li>Artikelnummer: {product.articlenr}</li>
                 <li>Status: {product.inStock ? 'Op voorraad' : 'Niet op voorraad'}</li>
                 {selectedVariant && (
                   <li>Variant: {selectedVariant.name}</li>

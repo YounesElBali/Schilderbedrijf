@@ -16,44 +16,38 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // useEffect(() => {
-  //   const fetchRecommendedProducts = async () => {
-  //     if (cart.length === 0) {
-  //       setIsLoading(false);
-  //       return;
-  //     }
-
-  //     try {
-  //       // Get categories from current cart items
-  //       const categories = [...new Set(cart.map(item => item))];
-        
-  //       // Fetch recommended products based on categories
-  //       const response = await fetch('/api/products/recommended', {
-  //         method: 'POST',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //         },
-  //         body: JSON.stringify({
-  //           categories,
-  //           excludeIds: cart.map(item => item.id)
-  //         }),
-  //       });
-
-  //       if (!response.ok) {
-  //         throw new Error('Failed to fetch recommendations');
-  //       }
-
-  //       const data = await response.json();
-  //       setRecommendedProducts(data);
-  //     } catch (error) {
-  //       console.error('Error fetching recommendations:', error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   fetchRecommendedProducts();
-  // }, [cart]);
+  useEffect(() => {
+    const fetchRecommendedProducts = async () => {
+      if (cart.length === 0) {
+        setIsLoading(false);
+        return;
+      }
+  
+      try {
+        // Fetch 3 random products
+        const response = await fetch('/api/products/recommended', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to fetch random products');
+        }
+  
+        const data = await response.json();
+        setRecommendedProducts(data);
+      } catch (error) {
+        console.error('Error fetching random products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    fetchRecommendedProducts();
+  }, [cart]);
+  
 
   const totalPrice = cart.reduce((total, item) => total + item.price * (item.quantity ?? 1), 0);
 
@@ -128,7 +122,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
             </div>
 
             {/* Recommended Products */}
-            {/* {!isLoading && recommendedProducts.length > 0 && (
+            {!isLoading && recommendedProducts.length > 0 && (
               <div className="mt-8">
                 <h3 className="text-xl font-bold mb-4">Aanbevolen voor jou</h3>
                 <div className="space-y-4">
@@ -153,7 +147,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
                   ))}
                 </div>
               </div>
-            )} */}
+            )}
 
             {/* Checkout Button */}
             <div className="mt-6">

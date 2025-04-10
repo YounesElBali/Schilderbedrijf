@@ -32,7 +32,8 @@ export async function GET() {
       price: bestseller.product.price,
       image: bestseller.product.image,
       isNew: bestseller.product.isNew,
-      category: bestseller.product.category
+      category: bestseller.product.category,
+      articlenr: bestseller.product.articlenr
     }));
 
     return NextResponse.json(formattedProducts);

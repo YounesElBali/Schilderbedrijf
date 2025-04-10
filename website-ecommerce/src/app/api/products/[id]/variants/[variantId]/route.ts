@@ -4,13 +4,14 @@ import prisma from '@/lib/prisma';
 // GET a specific variant
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; variantId: string } }
+  { params }: { params: Promise<{ id: string; variantId: string }> }
 ) {
   try {
-    const productId = parseInt(params.id);
-    const variantId = parseInt(params.variantId);
+    const { id, variantId } = await params;
+    const productId = parseInt(id);
+    const varianId = parseInt(variantId);
     
-    if (isNaN(productId) || isNaN(variantId)) {
+    if (isNaN(productId) || isNaN(varianId)) {
       return NextResponse.json(
         { error: 'Invalid product or variant ID' },
         { status: 400 }
@@ -19,7 +20,7 @@ export async function GET(
 
     const variant = await prisma.productVariant.findFirst({
       where: { 
-        id: variantId,
+        id: varianId,
         productId 
       },
     });
@@ -44,13 +45,14 @@ export async function GET(
 // PATCH (update) a specific variant
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; variantId: string } }
+  { params }: { params: Promise<{ id: string; variantId: string }> }
 ) {
   try {
-    const productId = parseInt(params.id);
-    const variantId = parseInt(params.variantId);
+    const { id, variantId } = await params;
+    const productId = parseInt(id);
+    const varianId = parseInt(variantId);
     
-    if (isNaN(productId) || isNaN(variantId)) {
+    if (isNaN(productId) || isNaN(varianId)) {
       return NextResponse.json(
         { error: 'Invalid product or variant ID' },
         { status: 400 }
@@ -61,7 +63,7 @@ export async function PATCH(
 
     const variant = await prisma.productVariant.update({
       where: { 
-        id: variantId,
+        id: varianId,
         productId 
       },
       data: {
@@ -84,13 +86,14 @@ export async function PATCH(
 // DELETE a specific variant
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; variantId: string } }
+  { params }: { params: Promise<{ id: string; variantId: string }> }
 ) {
   try {
-    const productId = parseInt(params.id);
-    const variantId = parseInt(params.variantId);
+    const { id, variantId } = await params;
+    const productId = parseInt(id);
+    const varianId = parseInt(variantId);
     
-    if (isNaN(productId) || isNaN(variantId)) {
+    if (isNaN(productId) || isNaN(varianId)) {
       return NextResponse.json(
         { error: 'Invalid product or variant ID' },
         { status: 400 }
@@ -99,7 +102,7 @@ export async function DELETE(
 
     await prisma.productVariant.delete({
       where: { 
-        id: variantId,
+        id: varianId,
         productId 
       },
     });
