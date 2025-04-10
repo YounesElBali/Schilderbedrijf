@@ -22,38 +22,32 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
         setIsLoading(false);
         return;
       }
-
+  
       try {
-        // Get categories from current cart items
-        const categories = [...new Set(cart.map(item => item))];
-        
-        // Fetch recommended products based on categories
+        // Fetch 3 random products
         const response = await fetch('/api/products/recommended', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            categories,
-            excludeIds: cart.map(item => item.id)
-          }),
         });
-
+  
         if (!response.ok) {
-          throw new Error('Failed to fetch recommendations');
+          throw new Error('Failed to fetch random products');
         }
-
+  
         const data = await response.json();
         setRecommendedProducts(data);
       } catch (error) {
-        console.error('Error fetching recommendations:', error);
+        console.error('Error fetching random products:', error);
       } finally {
         setIsLoading(false);
       }
     };
-
+  
     fetchRecommendedProducts();
   }, [cart]);
+  
 
   const totalPrice = cart.reduce((total, item) => total + item.price * (item.quantity ?? 1), 0);
 
@@ -64,7 +58,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
 
       {/* Sliding Panel */}
       <div
-        className={`fixed top-6 right-0 w-96 h-full bg-[#ededed] z-50 shadow-lg transition-all transform  ${
+        className={`fixed top-6 right-0 w-96 h-full bg-[#ffffff] z-50 shadow-lg transition-all transform  ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -88,30 +82,31 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
             
             {/* Cart Items */}
             {cart.map((item) => (
-              <div key={item.id} className="border rounded-sm p-4 mb-4 flex">
+              <div key={`${item.id}-${item.variantId || 'base'}`} className="border rounded-sm p-4 mb-4 flex">
                 <div className="w-24 h-24 bg-gray-100 mr-4 flex items-center justify-center">
                   <img src={item.image} alt={item.name} className="max-w-full max-h-full" />
                 </div>
                 <div className="flex-grow">
                   <h4 className="font-bold">{item.name}</h4>
+                  {item.variantName && <p className="text-sm text-gray-600">Variant: {item.variantName}</p>}
                   <p className="text-xl font-semibold mt-2">€{item.price.toFixed(2)}</p>
                   <div className="mt-2">
-                    <label htmlFor={`quantity-${item.id}`} className="mr-2 text-sm">
+                    <label htmlFor={`quantity-${item.id}-${item.variantId || 'base'}`} className="mr-2 text-sm">
                       Hoeveelheid:
                     </label>
                     <input
                       type="number"
-                      id={`quantity-${item.id}`}
+                      id={`quantity-${item.id}-${item.variantId || 'base'}`}
                       value={item.quantity}
                       min={1}
-                      onChange={(e) => updateQuantity(item.id.toString(), parseInt(e.target.value))}
+                      onChange={(e) => updateQuantity(item.id.toString(), parseInt(e.target.value), item.variantId)}
                       className="w-16 px-2 py-1 border rounded-md"
                     />
                   </div>
                 </div>
                 <div className="self-end">
                   <button
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => removeFromCart(item.id, item.variantId)}
                     className="bg-red-500 text-white px-4 py-2 w-32 font-medium"
                   >
                     Verwijderen

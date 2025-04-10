@@ -8,7 +8,10 @@ interface Product {
   name: string;
   price: number;
   image: string;
+  articlenr:number;
   quantity?: number;
+  variantId?: number;
+  variantName?: string;
 }
 
 // Define cart context type
@@ -16,8 +19,8 @@ interface CartContextType {
   cart: Product[];
   getTotalPrice: () => number; 
   addToCart: (product: Product) => void;
-  removeFromCart: (id: number) => void;  
-  updateQuantity: (id: string, quantity: number) => void;
+  removeFromCart: (id: number, variantId?: number) => void;  
+  updateQuantity: (id: string, quantity: number, variantId?: number) => void;
   clearCart: () => void;
 }
 
@@ -44,13 +47,18 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     console.log("Adding product:", product); // Debugging log
 
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
+      const existingItem = prevCart.find(
+        (item) => item.id === product.id && item.variantId === product.variantId
+      );
+      
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: (item.quantity || 1) + 1 } : item
+          item.id === product.id && item.variantId === product.variantId
+            ? { ...item, quantity: (item.quantity || 1) + (product.quantity || 1) }
+            : item
         );
       } else {
-        return [...prevCart, { ...product, quantity: 1 }];
+        return [...prevCart, { ...product, quantity: product.quantity || 1 }];
       }
     });
   };
@@ -59,18 +67,22 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     return cart.reduce((total, item) => total + item.price * (item.quantity ?? 1), 0);
   };
 
-  const removeFromCart = (id: number) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== id));
+  const removeFromCart = (id: number, variantId?: number) => {
+    setCart((prevCart) => 
+      prevCart.filter((item) => !(item.id === id && item.variantId === variantId))
+    );
   };
 
   const clearCart = () => {
     setCart([]);
   };
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = (id: string, quantity: number, variantId?: number) => {
     setCart((prev) =>
       prev.map((item) =>
-        item.id === parseInt(	id) ? { ...item, quantity: Math.max(1, quantity) } : item
+        item.id === parseInt(id) && item.variantId === variantId
+          ? { ...item, quantity: Math.max(1, quantity) }
+          : item
       )
     );
   };

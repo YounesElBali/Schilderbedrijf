@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { json } from "stream/consumers";
 
 interface Category {
   id: number;
@@ -10,9 +11,11 @@ interface Category {
   path: string;
 }
 interface OrderItem {
+  variant: ProductVariant;
   productId: number;
   quantity: number;
-  product: Product; // assuming API sends full product details
+  price: number;
+  product: Product;
 }
 
 interface Product {
@@ -22,8 +25,31 @@ interface Product {
   price: number;
   image: string;
   isNew: boolean;
+  articlenr: number;
   inStock: boolean;
   categoryId: number;
+  deliveryCost: number;
+  variants?: ProductVariant[];
+}
+
+interface ProductVariant {
+  id: number;
+  productId: number;
+  name: string;
+  price?: number;
+  inStock: boolean;
+}
+
+interface ShippingAddress {
+  firstName: string;
+  lastName: string;
+  company?: string;
+  street: string;
+  vatNumber?: string;
+  postalCode: string;
+  city: string;
+  phone: string;
+  country: string;
 }
 
 interface Order {
@@ -33,14 +59,9 @@ interface Order {
   status: string;
   createdAt: string;
   items: OrderItem[];
-  shippingAddress: {
-    firstName: string;
-    lastName: string;
-    street: string;
-    postalCode: string;
-    city: string;
-    country: string;
-  };
+  orderItems: OrderItem[];
+  shippingAddress: string;
+  shippingParsed: ShippingAddress;
 }
 
 export default function AdminDashboard() {
@@ -182,9 +203,12 @@ export default function AdminDashboard() {
           description: formData.get("description"),
           price: parseFloat(formData.get("price") as string),
           image: imagePath,
+          articlenr: parseInt(formData.get("articlenr") as string),
           categoryId: parseInt(formData.get("categoryId") as string),
           isNew: formData.get("isNew") === "true",
           inStock: formData.get("inStock") === "true",
+          deliveryCost: parseFloat(formData.get("deliveryCost") as string),
+          variants: [], // Initialize with empty variants
         }),
       });
 
@@ -196,6 +220,91 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Error adding product:", error);
       setUploadError("Failed to add product");
+    }
+  };
+
+  const handleAddVariant = async (productId: number, variantName: string, variantPrice?: number) => {
+    try {
+      const res = await fetch(`/api/products/${productId}/variants`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: variantName,
+          price: variantPrice,
+        }),
+      });
+
+      if (res.ok) {
+        const newVariant = await res.json();
+        
+        // Update the products state with the new variant
+        setProducts(products.map(product => {
+          if (product.id === productId) {
+            return {
+              ...product,
+              variants: [...(product.variants || []), newVariant]
+            };
+          }
+          return product;
+        }));
+      }
+    } catch (error) {
+      console.error("Error adding variant:", error);
+      setUploadError("Failed to add variant");
+    }
+  };
+
+  const handleUpdateVariant = async (productId: number, variantId: number, updates: { name?: string, price?: number, inStock?: boolean }) => {
+    try {
+      const res = await fetch(`/api/products/${productId}/variants/${variantId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+
+      if (res.ok) {
+        const updatedVariant = await res.json();
+        
+        // Update the products state with the updated variant
+        setProducts(products.map(product => {
+          if (product.id === productId) {
+            return {
+              ...product,
+              variants: product.variants?.map(variant => 
+                variant.id === variantId ? updatedVariant : variant
+              ) || []
+            };
+          }
+          return product;
+        }));
+      }
+    } catch (error) {
+      console.error("Error updating variant:", error);
+      setUploadError("Failed to update variant");
+    }
+  };
+
+  const handleDeleteVariant = async (productId: number, variantId: number) => {
+    try {
+      const res = await fetch(`/api/products/${productId}/variants/${variantId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        // Update the products state by removing the deleted variant
+        setProducts(products.map(product => {
+          if (product.id === productId) {
+            return {
+              ...product,
+              variants: product.variants?.filter(variant => variant.id !== variantId) || []
+            };
+          }
+          return product;
+        }));
+      }
+    } catch (error) {
+      console.error("Error deleting variant:", error);
+      setUploadError("Failed to delete variant");
     }
   };
 
@@ -219,11 +328,14 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           name: formData.get("name"),
           description: formData.get("description"),
+          articlenr: parseInt(formData.get("articlenr") as string),
           price: parseFloat(formData.get("price") as string),
           image: imagePath,
           categoryId: parseInt(formData.get("categoryId") as string),
           isNew: formData.get("isNew") === "true",
           inStock: formData.get("inStock") === "true",
+          deliveryCost: parseFloat(formData.get("deliveryCost") as string),
+          variants: formData.get("productVariants") as string,
         }),
       });
 
@@ -309,6 +421,30 @@ export default function AdminDashboard() {
       setUploadError("Failed to delete product");
     }
   };
+
+  const processedOrders = useMemo(() => {
+    return orders.map((order) => {
+      let shipping: ShippingAddress = {
+        firstName: '',
+        lastName: '',
+        street: '',
+        postalCode: '',
+        city: '',
+        phone: '',
+        country: 'Nederland'
+      };
+      try {
+        shipping = JSON.parse(order.shippingAddress.toString());
+      } catch (err) {
+        console.error("Invalid JSON in shippingAddress for order", order.id, err);
+      }
+      return {
+        ...order,
+        shippingParsed: shipping,
+      };
+    });
+  }, [orders]);
+  
 
   if (isLoading) {
     return <div className="p-4">Loading...</div>;
@@ -459,6 +595,17 @@ export default function AdminDashboard() {
               />
             </div>
             <div>
+              <label className="block mb-1">Verzendkosten</label>
+              <input
+                type="number"
+                name="deliveryCost"
+                step="0.01"
+                required
+                defaultValue={editingProduct?.deliveryCost || 6.95}
+                className="w-1/5 p-2 border rounded"
+              />
+            </div>
+            <div>
               <label className="block mb-1">Beschrijving</label>
               <textarea
                 name="description"
@@ -467,7 +614,16 @@ export default function AdminDashboard() {
                 className="w-1/3 p-2 border rounded"
               />
             </div>
-            
+            <div>
+              <label className="block mb-1">Artikelnummer</label>
+              <input
+                type="number"
+                name="articlenr"
+                required
+                defaultValue={editingProduct?.articlenr}
+                className="w-1/5 p-2 border rounded"
+              />
+            </div>
             <div>
               <label className="block mb-1">Afbeelding</label>
               <input
@@ -520,6 +676,98 @@ export default function AdminDashboard() {
                 In voorraad
               </label>
             </div>
+            {editingProduct && (
+              <div className="mt-6 border-t pt-4">
+                <h3 className="text-lg font-semibold mb-2">Productn Variants</h3>
+                
+                <div className="mb-4">
+                  {editingProduct.variants && editingProduct.variants.length > 0 ? (
+                    <div className="space-y-2">
+                      {editingProduct.variants.map((variant) => (
+                        <div key={variant.id} className="flex items-center space-x-2 p-2 border rounded">
+                          <input
+                            type="text"
+                            value={variant.name}
+                            onChange={(e) => handleUpdateVariant(editingProduct.id, variant.id, { name: e.target.value })}
+                            className="p-1 border rounded"
+                          />
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={variant.price || ''}
+                            placeholder="Price (optional)"
+                            onChange={(e) => handleUpdateVariant(editingProduct.id, variant.id, { price: e.target.value ? parseFloat(e.target.value) : undefined })}
+                            className="p-1 border rounded w-24"
+                          />
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={variant.inStock}
+                              onChange={(e) => handleUpdateVariant(editingProduct.id, variant.id, { inStock: e.target.checked })}
+                              className="mr-1"
+                            />
+                            In Stock
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteVariant(editingProduct.id, variant.id)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No variants added yet.</p>
+                  )}
+                </div>
+                
+                <div className="flex items-end space-x-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Variant Name</label>
+                    <input
+                      type="text"
+                      id="variantName"
+                      placeholder="e.g., Size 10, Large"
+                      className="mt-1 p-2 border rounded"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Price (optional)</label>
+                    <input
+                      type="number"
+                      id="variantPrice"
+                      step="0.01"
+                      placeholder="Use product price"
+                      className="mt-1 p-2 border rounded w-32"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nameInput = document.getElementById('variantName') as HTMLInputElement;
+                      const priceInput = document.getElementById('variantPrice') as HTMLInputElement;
+                      
+                      if (nameInput.value.trim()) {
+                        handleAddVariant(
+                          editingProduct.id, 
+                          nameInput.value.trim(), 
+                          priceInput.value ? parseFloat(priceInput.value) : undefined
+                        );
+                        
+                        // Clear inputs
+                        nameInput.value = '';
+                        priceInput.value = '';
+                      }
+                    }}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded"
+                  >
+                    Add Variant
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="flex space-x-4">
               <button
                 type="submit"
@@ -554,6 +802,7 @@ export default function AdminDashboard() {
                 />
                 <p className="text-sm text-gray-600 mt-2">{product.description}</p>
                 <p className="font-semibold mt-2">€{product.price}</p>
+                <p className="font-semibold mt-2">Artikelnummer: {product.articlenr}</p>
                 <div className="flex space-x-2 mt-2">
                   {product.isNew && (
                     <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
@@ -600,40 +849,72 @@ export default function AdminDashboard() {
 {activeTab === "orders" && (
   <div>
     <h2 className="text-xl font-semibold mb-4">Orders Lijst</h2>
-    <div className="space-y-4 w-1/5">
-      {orders.map((order) => (
+    <div className="space-y-4 w-4/5">
+      {processedOrders.map((order) => (
         <div key={order.id} className="border rounded p-4">
           <div className="space-y-2">
-            
-            {/* 1. Order ID */}
-            <p className="font-semibold text-lg">Order #{order.id} Date of order: {new Date(order.createdAt).toLocaleDateString()} </p>
-
-            {/* 3. Ordered Products */}
-            <div>
-              <p className="font-semibold mb-1">Ordered Products:</p>
-              <ul className="list-disc list-inside text-sm text-gray-700">
-                {order.items?.map((item, idx) => (
-                  <li key={idx}>
-                    {item?.product?.name} – Quantity: {item?.quantity} – €{((item?.product?.price || 0) * (item?.quantity || 0)).toFixed(2)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* 4. Total Price */}
             <p className="font-semibold text-lg">
-              Total: €{order.totalPrice}
+              Order #{order.id} – Date: {new Date(order.createdAt).toLocaleDateString()}
             </p>
 
-            {/* 5. Username & Address */}
-            <div className="text-sm text-gray-600">
-              <p className="font-semibold text-lg">Gebruiker:</p>
-              <p>{order.shippingAddress.firstName} {order.shippingAddress.lastName}</p>
-              <p>{order.shippingAddress.street}</p>
-              <p>{order.shippingAddress.postalCode} {order.shippingAddress.city}</p>
+            {/* Ordered Products */}
+            <div>
+              <p className="font-semibold mb-1">Bestelde Producten:</p>
+              <div className="border rounded p-4 bg-white">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2">Product</th>
+                      <th className="text-right py-2">Aantal</th>
+                      <th className="text-right py-2">Prijs per stuk</th>
+                      <th className="text-right py-2">Totaal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {order.orderItems?.map((item: OrderItem, idx: number) => (
+                      <tr key={idx} className="border-b">
+                        <td className="py-2">
+                          <div className="flex items-center">
+                            <img 
+                              src={item.product.image} 
+                              alt={item.product.name}
+                              className="w-12 h-12 object-contain mr-3"
+                            />
+                            <div>
+                              <p className="font-medium">{item.product.name}</p>
+                              <p className="text-sm text-gray-500">Artikelnummer: {item.product.articlenr}</p>
+                              <p className="text-sm text-gray-500">{item.variant.name}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-right py-2">{item.quantity}</td>
+                        <td className="text-right py-2">€{item.price.toFixed(2)}</td>
+                        <td className="text-right py-2">€{(item.price * item.quantity).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="font-bold">
+                      <td colSpan={3} className="text-right py-2">Totaal:</td>
+                      <td className="text-right py-2">€{order.totalPrice.toFixed(2)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
 
-            {/* 6. Status Dropdown */}
+            {/* User Info */}
+            <div className="text-sm text-gray-600">
+              <p className="font-semibold text-lg">Gebruiker:</p>
+              <p>Voornaam:{order.shippingParsed.firstName} Achternaam:{order.shippingParsed.lastName}</p>
+              {order.shippingParsed.company && (
+                <p>Bedrijf: {order.shippingParsed.company}</p>
+              )}
+              <p>Straatnaam:{order.shippingParsed.street} Postcode:{order.shippingParsed.postalCode} Plaats:{order.shippingParsed.city}</p>
+              <p>Telefoon: {order.shippingParsed.phone}</p>
+            </div>
+
+            {/* Status */}
             <div>
               <select
                 value={order.status}
@@ -647,7 +928,6 @@ export default function AdminDashboard() {
                 <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
-
           </div>
         </div>
       ))}

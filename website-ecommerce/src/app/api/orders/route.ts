@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userId, items, totalPrice, shippingAddress, billingAddress, paymentMethod, email } = body;
+    const { userId, items, totalPrice, shippingAddress, billingAddress, paymentMethod, email, paymentId } = body;
 
     // Validate required fields
     if (!items || !totalPrice || !shippingAddress || !billingAddress || !paymentMethod || !email) {
@@ -24,14 +23,16 @@ export async function POST(request: Request) {
         email,
         totalPrice: parseFloat(totalPrice),
         status: 'PENDING',
-        shippingAddress: shippingAddress,
-        billingAddress: billingAddress,
+        shippingAddress: shippingAddress.toString(),
+        billingAddress: billingAddress.toString(),
         paymentMethod,
+        paymentId,
         orderItems: {
           create: items.map((item: any) => ({
             productId: item.id,
             quantity: item.quantity,
             price: item.price,
+            variantId: item.variantId
           })),
         },
       },
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
         orderItems: {
           include: {
             product: true,
+            variant: true,
           },
         },
       },
@@ -62,6 +64,7 @@ export async function GET() {
         orderItems: {
           include: {
             product: true,
+            variant: true,
           },
         },
       },

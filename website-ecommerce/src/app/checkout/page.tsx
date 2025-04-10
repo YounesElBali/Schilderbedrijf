@@ -10,6 +10,23 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [isGuestCheckout, setIsGuestCheckout] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [deliveryCost, setDeliveryCost] = useState(0);
+
+  const calculateDeliveryCost = () => {
+    const total = getTotalPrice();
+    if (total >= 80) return 0;
+
+    const totalDeliveryCost = cart.reduce((sum, item) => {
+      return sum + ( 6.95);
+    }, 0);
+
+    return totalDeliveryCost;
+  };
+
+  // Update delivery cost whenever cart changes
+  useEffect(() => {
+    setDeliveryCost(calculateDeliveryCost());
+  }, [cart]);
 
   // Get user data from localStorage
   useEffect(() => {
@@ -21,79 +38,80 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  const handleOrderCompletion = async (paymentId?: string) => {
-    try {
-      const formData = new FormData(document.querySelector('form') as HTMLFormElement);
-      const email = formData.get('email') as string;
+  // const handleOrderCompletion = async (paymentId?: string) => {
+  //   try {
+  //     const formData = new FormData(document.querySelector('form') as HTMLFormElement);
+  //     const email = formData.get('email') as string;
 
-      const shippingAddress = {
-        firstName: formData.get('firstName'),
-        lastName: formData.get('lastName'),
-        company: formData.get('company'),
-        street: formData.get('street'),
-        vatNumber: formData.get('vatNumber'),
-        postalCode: formData.get('postalCode'),
-        city: formData.get('city'),
-        phone: formData.get('phone'),
-        country: 'Nederland',
-      };
+  //     const shippingAddress = {
+  //       firstName: formData.get('firstName'),
+  //       lastName: formData.get('lastName'),
+  //       company: formData.get('company'),
+  //       street: formData.get('street'),
+  //       vatNumber: formData.get('vatNumber'),
+  //       postalCode: formData.get('postalCode'),
+  //       city: formData.get('city'),
+  //       phone: formData.get('phone'),
+  //       country: 'Nederland',
+  //     };
 
-      const billingAddress = formData.get('sameBilling') === 'on'
-        ? shippingAddress
-        : {
-            firstName: formData.get('billingFirstName'),
-            lastName: formData.get('billingLastName'),
-            company: formData.get('billingCompany'),
-            street: formData.get('billingStreet'),
-            vatNumber: formData.get('billingVatNumber'),
-            postalCode: formData.get('billingPostalCode'),
-            city: formData.get('billingCity'),
-            phone: formData.get('billingPhone'),
-            country: 'Nederland',
-          };
+  //     const billingAddress = formData.get('sameBilling') === 'on'
+  //       ? shippingAddress
+  //       : {
+  //           firstName: formData.get('billingFirstName'),
+  //           lastName: formData.get('billingLastName'),
+  //           company: formData.get('billingCompany'),
+  //           street: formData.get('billingStreet'),
+  //           vatNumber: formData.get('billingVatNumber'),
+  //           postalCode: formData.get('billingPostalCode'),
+  //           city: formData.get('billingCity'),
+  //           phone: formData.get('billingPhone'),
+  //           country: 'Nederland',
+  //         };
 
-      // For guest users, user.id will be null
-      const userId = isGuestCheckout ? null : user?.id;
+  //     // For guest users, user.id will be null
+  //     const userId = isGuestCheckout ? null : user?.id;
 
-      // Create order request
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId, // Guest or logged-in user
-          items: cart,
-          totalPrice: getTotalPrice(),
-          shippingAddress: JSON.stringify(shippingAddress), // ✅ convert to string
-          billingAddress: JSON.stringify(billingAddress), 
-          paymentMethod: 'ideal',
-          paymentId,
-          email,
-        }),
-      });
+  //     // Create order request
+  //     const response = await fetch('/api/orders', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         userId,
+  //         items: cart,
+  //         totalPrice: getTotalPrice() + calculateDeliveryCost(),
+  //         deliveryCost: deliveryCost,
+  //         shippingAddress: JSON.stringify(shippingAddress),
+  //         billingAddress: JSON.stringify(billingAddress), 
+  //         paymentMethod: 'ideal',
+  //         paymentId,
+  //         email,
+  //       }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error('Failed to create order');
-      }
+  //     if (!response.ok) {
+  //       throw new Error('Failed to create order');
+  //     }
 
-      const orderData = await response.json();
+  //     const orderData = await response.json();
 
-      // Store the order ID for later (success page)
-      localStorage.setItem('lastOrderId', orderData.id.toString());
+  //     // Store the order ID for later (success page)
+  //     localStorage.setItem('lastOrderId', orderData.id.toString());
 
-      // Clear the cart
-      clearCart();
+  //     // Clear the cart
+  //     clearCart();
 
-      // Redirect to the success page
-      router.push('/order-success');
-    } catch (error) {
-      console.error('Error processing order:', error);
-      setError('Er is een fout opgetreden bij het verwerken van je bestelling. Probeer het opnieuw.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  //     // Redirect to the success page
+  //     router.push('/order-success');
+  //   } catch (error) {
+  //     console.error('Error processing order:', error);
+  //     setError('Er is een fout opgetreden bij het verwerken van je bestelling. Probeer het opnieuw.');
+  //   } finally {
+  //     setIsProcessing(false);
+  //   }
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,25 +121,83 @@ export default function CheckoutPage() {
     try {
       const formData = new FormData(document.querySelector('form') as HTMLFormElement);
       const email = formData.get('email') as string;
+      
+      // Store form data in localStorage for later use after payment
+      const orderData = {
+        email,
+        shippingAddress: {
+          firstName: formData.get('firstName'),
+          lastName: formData.get('lastName'),
+          company: formData.get('company'),
+          street: formData.get('street'),
+          vatNumber: formData.get('vatNumber'),
+          postalCode: formData.get('postalCode'),
+          city: formData.get('city'),
+          phone: formData.get('phone'),
+          country: 'Nederland',
+        },
+        billingAddress: formData.get('sameBilling') === 'on'
+          ? {
+              firstName: formData.get('firstName'),
+              lastName: formData.get('lastName'),
+              company: formData.get('company'),
+              street: formData.get('street'),
+              vatNumber: formData.get('vatNumber'),
+              postalCode: formData.get('postalCode'),
+              city: formData.get('city'),
+              phone: formData.get('phone'),
+              country: 'Nederland',
+            }
+          : {
+              firstName: formData.get('billingFirstName'),
+              lastName: formData.get('billingLastName'),
+              company: formData.get('billingCompany'),
+              street: formData.get('billingStreet'),
+              vatNumber: formData.get('billingVatNumber'),
+              postalCode: formData.get('billingPostalCode'),
+              city: formData.get('billingCity'),
+              phone: formData.get('billingPhone'),
+              country: 'Nederland',
+            },
+        userId: isGuestCheckout ? null : user?.id,
+        items: cart,
+        totalPrice: getTotalPrice() + calculateDeliveryCost(),
+        deliveryCost: deliveryCost,
+        paymentMethod: 'ideal',
+      };
+      
+      // Store order data in localStorage for later use
+      localStorage.setItem('pendingOrderData', JSON.stringify(orderData));
   
-      // Step 1: Create Mollie payment session
+      // Create Mollie payment session
       const paymentResponse = await fetch('/api/create-payment-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          totalPrice: getTotalPrice().toFixed(2),
+          totalPrice: (getTotalPrice() + calculateDeliveryCost()).toFixed(2),
           email,
           items: cart,
+          orderData: orderData, // Pass order data to be stored with payment
         }),
       });
   
       if (!paymentResponse.ok) throw new Error('Payment creation failed');
   
-      const { paymentUrl } = await paymentResponse.json();
-  
-      // Step 2: Redirect to Mollie payment page
+      const { paymentUrl, error, redirectToCheckout } = await paymentResponse.json();
+     
+      if (error) {
+        // If there's an error (e.g., failed payment creation), handle it here
+        if (redirectToCheckout) {
+          // Redirect to the checkout page if needed
+          router.push('/checkout');
+        } else {
+          setError('Er is een fout opgetreden tijdens het starten van de betaling.');
+        }
+        return;
+      }
+      // Redirect to Mollie payment page
       window.location.href = paymentUrl;
     } catch (error) {
       console.error('Payment error:', error);
@@ -307,13 +383,21 @@ export default function CheckoutPage() {
             <span className="text-gray-600">
               Ik ga akkoord met de&nbsp;
             </span>
-            <Link href="/voorwaarden" className="text-gray-600">
+            <Link href="/terms" className="text-gray-600">
             <span className="text-blue-600">
-               voorwaarden
+               voorwaarden&nbsp;
+            </span>
+            </Link>
+            <span className="text-blue-600">
+               en
+            </span>
+            <Link href="/privacy" className="text-gray-600">
+            <span className="text-blue-600">
+               privacybeleid
             </span>
             </Link>
           </div>
-
+        
           {/* Submit button */}
           <button
             type="submit"
@@ -338,14 +422,32 @@ export default function CheckoutPage() {
               <div key={item.id} className="flex justify-between border-b pb-3 mb-3">
                 <div>
                   <p>{item.name}</p>
+                  {item.variantName && <p className="text-sm text-gray-600">Variant: {item.variantName}</p>}
+                  <br/>
                   <p className="text-sm text-gray-600">Aantal: {item.quantity}</p>
+                  
                 </div>
                 <p>€{(item.price * (item.quantity || 1)).toFixed(2)}</p>
               </div>
             ))}
+            <div className="flex justify-between border-b pb-3 mb-3">
+              <span>Verzendkosten</span>
+              <span>
+                {deliveryCost === 0 ? (
+                  <span className="text-green-600">Gratis</span>
+                ) : (
+                  `€6.95`
+                )}
+              </span>
+            </div>
+            {getTotalPrice() < 80 && (
+              <p className="text-sm text-green-600 mb-2">
+                Bestel voor €{(80 - getTotalPrice()).toFixed(2)} meer om gratis verzending te krijgen
+              </p>
+            )}
             <div className="flex justify-between font-bold">
               <span>Totaal</span>
-              <span>€{getTotalPrice().toFixed(2)}</span>
+              <span>€{(getTotalPrice() + deliveryCost).toFixed(2)}</span>
             </div>
           </>
         )}

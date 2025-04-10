@@ -12,7 +12,10 @@ export async function GET(
 
     const product = await prisma.product.findUnique({
       where: { id: idNumber },
-      include: { category: true }
+      include: { 
+        category: true,
+        variants: true // Include variants in the response
+      }
     });
     
     if (!product) {
@@ -48,7 +51,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { name, description, price, image, categoryId, isNew, inStock } = body;
+    const { name, description, price, image, categoryId, isNew, inStock, articlenr } = body;
 
     const product = await prisma.product.update({
       where: { id: idNumber },
@@ -60,6 +63,7 @@ export async function PATCH(
         categoryId,
         isNew,
         inStock,
+        articlenr,
       },
     });
 
