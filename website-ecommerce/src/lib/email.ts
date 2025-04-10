@@ -12,10 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to send order confirmation email
-export async function sendOrderConfirmationEmail(
-  orderData: any,
-  createdOrder: any
-) {
+export async function sendOrderConfirmationEmail( orderData: any, createdOrder: any) {
   try {
     // Get the email from the orderData (assuming it's stored there)
     const email = orderData.email;
@@ -39,8 +36,9 @@ export async function sendOrderConfirmationEmail(
         <strong>Team Pastoolz</strong>
       </p>
     </div>
-  `,
-};
+    `,
+  };
+
 
     // Send email
     const info = await transporter.sendMail(mailOptions);
@@ -48,6 +46,46 @@ export async function sendOrderConfirmationEmail(
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Error sending order confirmation email:', error);
+    return { success: false, error };
+  }
+}
+
+// Function to send track and trace email
+export async function sendTrackAndTraceEmail(orderData: any, trackingInfo: any) {
+  try {
+    const email = orderData.email;
+    const { trackingNumber, trackingLink } = trackingInfo;
+
+    const mailOptions = {
+      from: 'info@pastoolz.nl',
+      to: email,
+      subject: `Track & Trace informatie voor je bestelling`,
+      html: `
+      <div style="font-family: Arial, sans-serif; padding: 16px;">
+        <h2 style="color: #333;">Je bestelling is verzonden!</h2>
+        <p>
+          Goed nieuws! Je bestelling is onderweg. Hieronder vind je de Track & Trace gegevens om je pakket te volgen.
+        </p>
+        <p>
+          <strong>Trackingnummer:</strong> ${trackingNumber}<br/>
+          <strong>Volg je pakket:</strong> <a href="${trackingLink}" target="_blank">${trackingLink}</a>
+        </p>
+        <p>
+          Als je vragen hebt over je levering, neem gerust contact met ons op via <a href="mailto:info@pastoolz.nl">info@pastoolz.nl</a>.
+        </p>
+        <p style="margin-top: 32px;">
+          Met vriendelijke groet,<br/>
+          <strong>Team Pastoolz</strong>
+        </p>
+      </div>
+    `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Track & Trace email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending Track & Trace email:', error);
     return { success: false, error };
   }
 }

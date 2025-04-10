@@ -13,7 +13,7 @@ export default function Footer() {
               Wij bieden een breed assortiment aan producten voor zowel professionals als doe-het-zelvers.
             </p>
             <br/>
-            <p>PAStoolz kvk:</p>
+            <p>PAStoolz kvk: 96572876</p>
           </div>
 
           {/* Quick Links */}

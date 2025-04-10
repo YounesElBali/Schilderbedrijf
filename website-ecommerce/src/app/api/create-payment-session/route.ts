@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
       },
       description: 'Order',
       redirectUrl: `${baseUrl}/order-success`,
+      cancelUrl:`${baseUrl}/order-failed`,
       metadata: {
         email
       },
