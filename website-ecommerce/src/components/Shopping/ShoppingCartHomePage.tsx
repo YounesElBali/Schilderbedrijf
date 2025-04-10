@@ -122,7 +122,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
             </div>
 
             {/* Recommended Products */}
-            {!isLoading && recommendedProducts.length > 0 && (
+            {!isLoading && recommendedProducts.length >= 0 && (
               <div className="mt-8">
                 <h3 className="text-xl font-bold mb-4">Aanbevolen voor jou</h3>
                 <div className="space-y-4">
@@ -135,7 +135,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
                         <h4 className="font-medium">{product.name}</h4>
                         <p className="text-lg font-semibold mt-1">€{product.price.toFixed(2)}</p>
                       </div>
-                      <Link href={`/product/${product.id}`}>
+                      <Link href={`/products/${product.id}`}>
                         <button 
                           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
                           onClick={closeModal}
