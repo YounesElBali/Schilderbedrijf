@@ -242,9 +242,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               <ul className="list-disc list-inside text-gray-600 space-y-2">
                 <li>Artikelnummer: {product.articlenr}</li>
                 <li>Status: {product.inStock ? 'Op voorraad' : 'Niet op voorraad'}</li>
-                {selectedVariant && (
-                  <li>Variant: {selectedVariant.name}</li>
-                )}
               </ul>
             </div>
             <div className="border-t pt-6">
