@@ -40,7 +40,7 @@ export async function POST(request: Request) {
         categoryId: parseInt(categoryId),
         isNew: isNew || false,
         inStock: inStock || true,
-        articlenr: parseInt(articlenr),
+      articlenr,
       },
       include: {
         category: true,

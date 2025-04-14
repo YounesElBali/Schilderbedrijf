@@ -25,7 +25,7 @@ interface Product {
   price: number;
   image: string;
   isNew: boolean;
-  articlenr: number;
+  articlenr: string;
   inStock: boolean;
   categoryId: number;
   deliveryCost: number;
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
           description: formData.get("description"),
           price: parseFloat(formData.get("price") as string),
           image: imagePath,
-          articlenr: parseInt(formData.get("articlenr") as string),
+          articlenr: formData.get("articlenr"),
           categoryId: parseInt(formData.get("categoryId") as string),
           isNew: formData.get("isNew") === "true",
           inStock: formData.get("inStock") === "true",
@@ -328,7 +328,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           name: formData.get("name"),
           description: formData.get("description"),
-          articlenr: parseInt(formData.get("articlenr") as string),
+          articlenr: formData.get("articlenr"),
           price: parseFloat(formData.get("price") as string),
           image: imagePath,
           categoryId: parseInt(formData.get("categoryId") as string),
@@ -617,7 +617,6 @@ export default function AdminDashboard() {
             <div>
               <label className="block mb-1">Artikelnummer</label>
               <input
-                type="number"
                 name="articlenr"
                 required
                 defaultValue={editingProduct?.articlenr}

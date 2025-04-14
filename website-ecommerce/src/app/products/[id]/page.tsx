@@ -27,7 +27,7 @@ interface Product {
   description: string;
   isNew: boolean;
   inStock: boolean;
-  articlenr: number;
+  articlenr: string;
   images: ProductImage[];
   variants?: ProductVariant[];
 }

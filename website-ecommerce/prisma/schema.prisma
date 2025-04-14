@@ -44,7 +44,7 @@ model Product {
   description  String?
   price        Float
   image        String
-  articlenr    Int              @default(0)
+  articlenr    String              @default("0")
   isNew        Boolean          @default(false)
   inStock      Boolean          @default(true)
   deliveryCost Float            @default(6.95)
