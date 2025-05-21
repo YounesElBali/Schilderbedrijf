@@ -4,6 +4,7 @@ import { useCart } from '@/contexts/CartContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import DeliveryTimeline from '@/components/Menu/DeliveryTimeLine';
 
 interface ProductVariant {
   id: number;
@@ -11,6 +12,11 @@ interface ProductVariant {
   name: string;
   price?: number;
   inStock: boolean;
+}
+interface Traits {
+  id: number;
+  productId: number;
+  name: string;
 }
 
 interface ProductImage {
@@ -30,18 +36,20 @@ interface Product {
   articlenr: string;
   images: ProductImage[];
   variants?: ProductVariant[];
+  traits?: Traits[];
 }
+
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [categories, setCategories] = useState<{ id: number; name: string; image: string; path: string }[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -55,18 +63,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         }
         const productData = await productResponse.json();
         setProduct(productData);
-        
-        // Fetch variants separately
-        const variantsResponse = await fetch(`/api/products/${id}/variants`);
-        if (variantsResponse.ok) {
-          const variantsData = await variantsResponse.json();
-          setVariants(variantsData);
-          
-          // If the product has variants, select the first one by default
-          if (variantsData && variantsData.length > 0) {
-            setSelectedVariant(variantsData[0]);
-          }
-        }
       } catch (error) {
         console.error('Error fetching product:', error);
         setError('Error fetching product');
@@ -78,6 +74,23 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
     fetchProductAndVariants();
   }, [id, router]);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+      }
+    }
+  
+    fetchCategories();
+  }, []);
+  
 
   const handleAddToCart = () => {
     if (product) {
@@ -93,6 +106,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       });
     }
   };
+
 
   if (loading) {
     return (
@@ -114,10 +128,50 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     { id: 0, url: product.image, order: 0 },
     ...(product.images || [])
   ].sort((a, b) => a.order - b.order);
+  const category = categories.find((cat) => cat.id === (product as any)?.categoryId);
+
 
   return (
     <div className="min-h-screen bg-[#ffffff]	 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <div className="flex items-center gap-x-4 flex-wrap mb-4">
+      <button
+          onClick={() => router.back()}
+          className="flex items-center border border-gray-300 text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-md text-sm"
+        >
+        <p>{'< Terug'}</p> 
+        </button>
+
+  {/* Breadcrumb */}
+        <nav className="text-sm text-gray-500" aria-label="Breadcrumb">
+          <ol className="list-reset flex items-center space-x-1">
+            <li>
+              <Link href="/" className="hover:underline text-gray-600">
+                Home
+              </Link>
+              <span className="mx-2">/</span>
+            </li>
+            <li>
+              <Link
+                href={`/category/${category?.name || ''}`}
+                className="hover:underline text-gray-600"
+              >
+                {category?.name || 'Category'}
+              </Link>
+              <span className="mx-2">/</span>
+            </li>
+            <li className="text-black font-medium truncate max-w-[150px]">
+              {product.name}
+            </li>
+          </ol>
+        </nav>
+
+        {/* Back Button */}
+        
+      </div>
+
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Image Gallery */}
           <div className="space-y-4">
@@ -181,11 +235,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             </div>
 
             {/* Variant Selection */}
-            {variants && variants.length > 0 && (
+            {product.variants && product.variants.length > 0 && (
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-2">Selecteer variant</h3>
                 <div className="flex flex-wrap gap-2">
-                  {variants.map((variant) => (
+                  {product.variants.map((variant) => (
                     <button
                       key={variant.id}
                       onClick={() => setSelectedVariant(variant)}
@@ -236,17 +290,36 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 </button>
               </div>
             </div>
+            <DeliveryTimeline />
 
             <div className="border-t pt-6">
               <h2 className="text-lg font-semibold mb-2">Product Details</h2>
-              <ul className="list-disc list-inside text-gray-600 space-y-2">
+              <ul className="list-disc list-inside space-y-2">
                 <li>Artikelnummer: {product.articlenr}</li>
                 <li>Status: {product.inStock ? 'Op voorraad' : 'Niet op voorraad'}</li>
               </ul>
             </div>
+          {product.traits && product.traits.length > 0 && (
+             <div className="border-t pt-6">
+              {product.traits.map((trait) =>
+              (
+                <ul className="flex flex-wrap justify-start">
+                <li className="flex gap-x-3 w-1/2 mb-4" key={trait.id}>
+                  <svg className="shrink-0 size-6 mt-0.5 text-yellow-500 stroke-[3.5]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span className="text-black-600 dark:text-black text-lg">
+                  {trait.name}
+                  </span>
+                </li>
+              </ul>
+              ))}
+             </div>
+          )}
+
             <div className="border-t pt-6">
               <h3 className="text-lg font-semibold mb-2">Beschrijving</h3>
-              <p className="text-gray-600 whitespace-pre-line">{product.description}</p>
+              <p className=" whitespace-pre-line">{product.description}</p>
             </div>
           </div>
         </div>

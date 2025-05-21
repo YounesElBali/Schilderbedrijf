@@ -14,7 +14,9 @@ export async function GET(
       where: { id: idNumber },
       include: { 
         category: true,
-        variants: true // Include variants in the response
+        variants: true,
+        traits: true ,
+        Imges:true// Include variants in the response
       }
     });
     

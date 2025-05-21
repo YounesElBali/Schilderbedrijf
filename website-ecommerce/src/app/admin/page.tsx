@@ -30,8 +30,19 @@ interface Product {
   categoryId: number;
   deliveryCost: number;
   variants?: ProductVariant[];
+  traits?: Traits[];
+  imges?: Imges[];
 }
-
+interface Traits{
+  id: number;
+  productId: number;
+  name: string;
+}
+interface Imges{
+   id: number;
+  productId: number;
+  url: string;
+}
 interface ProductVariant {
   id: number;
   productId: number;
@@ -185,43 +196,57 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const imageFile = formData.get("image") as File;
+const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  const formData = new FormData(e.currentTarget);
+  const imageFiles = formData.getAll("images") as File[];
 
-    try {
-      // Upload image first
-      const imagePath = await handleImageUpload(imageFile);
-      if (!imagePath) return;
+  try {
+    // Upload multiple images
+    const uploadedImagePaths = await Promise.all(
+      imageFiles.map((file) => handleImageUpload(file))
+    );
+    const validImagePaths = uploadedImagePaths.filter(Boolean);
 
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.get("name"),
-          description: formData.get("description"),
-          price: parseFloat(formData.get("price") as string),
-          image: imagePath,
-          articlenr: formData.get("articlenr"),
-          categoryId: parseInt(formData.get("categoryId") as string),
-          isNew: formData.get("isNew") === "true",
-          inStock: formData.get("inStock") === "true",
-          deliveryCost: parseFloat(formData.get("deliveryCost") as string),
-          variants: [], // Initialize with empty variants
-        }),
-      });
+    if (validImagePaths.length === 0) return;
 
-      if (res.ok) {
-        const newProduct = await res.json();
-        setProducts([...products, newProduct]);
-   
+    // Collect traits
+    const traits: Traits[] = [];
+    const traitInputs = document.querySelectorAll<HTMLInputElement>('input[name="traits[]"]');
+    traitInputs.forEach((input) => {
+      if (input.value.trim()) {
+        traits.push({ id: 0, productId: 0, name: input.value.trim() });
       }
-    } catch (error) {
-      console.error("Error adding product:", error);
-      setUploadError("Failed to add product");
+    });
+
+    const res = await fetch("/api/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: formData.get("name"),
+        description: formData.get("description"),
+        price: parseFloat(formData.get("price") as string),
+        image: validImagePaths[0], // main image
+        articlenr: formData.get("articlenr"),
+        categoryId: parseInt(formData.get("categoryId") as string),
+        isNew: formData.get("isNew") === "true",
+        inStock: formData.get("inStock") === "true",
+        deliveryCost: parseFloat(formData.get("deliveryCost") as string),
+        traits,
+        imges: validImagePaths.map((url) => ({ id: 0, productId: 0, url })),
+        variants: [],
+      }),
+    });
+
+    if (res.ok) {
+      const newProduct = await res.json();
+      setProducts([...products, newProduct]);
     }
-  };
+  } catch (error) {
+    console.error("Error adding product:", error);
+    setUploadError("Failed to add product");
+  }
+};
 
   const handleAddVariant = async (productId: number, variantName: string, variantPrice?: number) => {
     try {
@@ -336,6 +361,8 @@ export default function AdminDashboard() {
           inStock: formData.get("inStock") === "true",
           deliveryCost: parseFloat(formData.get("deliveryCost") as string),
           variants: formData.get("productVariants") as string,
+          traits: formData.get("traits") as string,
+          imges: formData.get("imges") as string,
         }),
       });
 
@@ -767,6 +794,28 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+         {editingProduct ? (
+              editingProduct.traits && editingProduct.traits.length > 0 ? (
+                <div className="border-t pt-6 space-y-4">
+                  {editingProduct.traits.map((trait) => (
+                    <div key={trait.id}>
+                      <input
+                        type="text"
+                        value={trait.name}
+                        onChange={(e) =>
+                          handleUpdateVariant(editingProduct.id, trait.id, {
+                            name: e.target.value,
+                          })
+                        }
+                        className="p-2 border rounded w-full"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">No traits added yet.</p>
+              )
+            ) : null}
             <div className="flex space-x-4">
               <button
                 type="submit"
@@ -784,6 +833,7 @@ export default function AdminDashboard() {
                 </button>
               )}
             </div>
+            
           </form>
 
           <h2 className="text-xl font-semibold mb-4">Product Lijst</h2>
