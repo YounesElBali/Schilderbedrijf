@@ -39,39 +39,47 @@ model Category {
 }
 
 model Product {
-  id           Int              @id @default(autoincrement())
+  id           Int                 @id @default(autoincrement())
   name         String
   description  String?
   price        Float
-  image        String
+  images        Images[]
   articlenr    String              @default("0")
-  isNew        Boolean          @default(false)
-  inStock      Boolean          @default(true)
-  deliveryCost Float            @default(6.95)
-  category     Category         @relation(fields: [categoryId], references: [id])
+  isNew        Boolean             @default(false)
+  inStock      Boolean             @default(true)
+  traits       String?
+  deliveryCost Float               @default(6.95)
+  category     Category            @relation(fields: [categoryId], references: [id])
   categoryId   Int
   orderItems   OrderItem[]
   bestseller   Bestseller?
   variants     ProductVariant[]
   CartItem     CartItem[]
-  images       ProductImage[]
-  traits       Traits[]
-  Imges        Imges[]
+  productImages ProductProductImage[]
 }
-model Imges{
-  id         Int         @id @default(autoincrement())
-  productId  Int
-  product    Product     @relation(fields: [productId], references: [id])
-  url       String // e.g., "Size 10", "Large"
-}
-model ProductImage {
-  id        Int      @id @default(autoincrement())
+
+model Images {
+  id        Int     @id @default(autoincrement())  // primary key required
   url       String
-  product   Product  @relation(fields: [productId], references: [id])
   productId Int
-  order     Int      @default(0) // For ordering images
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Icons {
+  id             Int                 @id @default(autoincrement())
+  name           String
+  url            String
+  productImages  ProductProductImage[]
+}
+
+model ProductProductImage {
+  productId      Int
+  productImageId Int
+
+  product        Product             @relation(fields: [productId], references: [id])
+  productImage   Icons               @relation(fields: [productImageId], references: [id])
+
+  @@id([productId, productImageId])
 }
 
 model User {
@@ -167,11 +175,4 @@ model ProductVariant {
   orderItems OrderItem[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
-}
-
-model Traits {
-  id         Int         @id @default(autoincrement())
-  productId  Int
-  product    Product     @relation(fields: [productId], references: [id])
-  name       String // e.g., "Size 10", "Large"
 }

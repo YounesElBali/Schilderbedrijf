@@ -8,25 +8,29 @@ export async function GET(
   try {
     const productId = (await params).id;
     const idNumber = parseInt(productId);
-    
 
+    
     const product = await prisma.product.findUnique({
       where: { id: idNumber },
-      include: { 
+      include: {
         category: true,
         variants: true,
-        traits: true ,
-        Imges:true// Include variants in the response
-      }
+        images: true, // include the actual Image data (id, url)
+        productImages: {
+            include: {
+              productImage: true, // include the actual Icon data (id, name, url)
+            },
+          },
+      },
     });
-    
+
     if (!product) {
       return NextResponse.json(
         { message: "Product not found" },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(product);
   } catch (error) {
     console.error("Error fetching product:", error);
@@ -53,23 +57,50 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { name, description, price, image, categoryId, isNew, inStock, articlenr } = body;
+    const { name, description, price, images, categoryId, isNew, inStock, articlenr, traits,iconIds } = body;
+  // 1. Verwijder bestaande relaties
+await prisma.productProductImage.deleteMany({
+  where: { productId: idNumber }
+});
 
-    const product = await prisma.product.update({
-      where: { id: idNumber },
-      data: {
-        name,
-        description,
-        price,
-        image,
-        categoryId,
-        isNew,
-        inStock,
-        articlenr,
+// 2. Voeg nieuwe relaties toe via de join table
+await prisma.productProductImage.createMany({
+  data: iconIds.map((iconId: number) => ({
+    productId: idNumber,
+    productImageId: iconId,
+  })),
+});
+
+// 3. Update product zelf zonder connect/disconnect op productImages
+const product = await prisma.product.update({
+  where: { id: idNumber },
+  data: {
+    name,
+    description,
+    traits,
+    price,
+    
+    categoryId,
+    isNew,
+    inStock,
+    articlenr,
+     images: {
+          create: images?.map((img: { url: string }) => ({
+            url: img.url,
+          })) || [],
+        },
+  },
+  include: {
+    category: true,
+    images: true, // include the actual Image data (id, url)
+    productImages: {
+      include: {
+        productImage: true,
       },
-    });
-
-    return NextResponse.json(product);
+    },
+  },
+});
+   return NextResponse.json(product);
   } catch (error) {
     console.error("Error updating product:", error);
     return NextResponse.json(
@@ -104,6 +135,24 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    await prisma.images.deleteMany({
+      where: { productId: idNumber }
+    });
+
+    await prisma.orderItem.deleteMany({
+      where: { productId: idNumber }
+    });
+
+
+    await prisma.productProductImage.deleteMany({
+      where: { productId: idNumber }
+    });
+
+     await prisma.productVariant.deleteMany({
+      where: { productId: idNumber }
+    });
+
 
     await prisma.product.delete({
         where: { id: idNumber },

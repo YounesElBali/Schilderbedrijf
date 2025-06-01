@@ -18,30 +18,39 @@ interface OrderItem {
   product: Product;
 }
 
+interface Icons {
+  id: number;
+  name: string;
+  url: string;
+  productImages: ProductProductImage[]; // renamed from "products"
+}
+
+interface Images {
+  id: number;
+  url: string;
+  productId: number;
+}
+
+interface ProductProductImage {
+  productId: number;
+  productImageId: number;
+  product: Product;
+  productImage: Icons;
+}
 interface Product {
   id: number;
   name: string;
-  description: string;
   price: number;
-  image: string;
+  image: Images[];  // fallback main image if needed
+  description: string;
   isNew: boolean;
-  articlenr: string;
   inStock: boolean;
-  categoryId: number;
   deliveryCost: number;
+  articlenr: string;
+  productImages: ProductProductImage[];
   variants?: ProductVariant[];
-  traits?: Traits[];
-  imges?: Imges[];
-}
-interface Traits{
-  id: number;
-  productId: number;
-  name: string;
-}
-interface Imges{
-   id: number;
-  productId: number;
-  url: string;
+  traits: string;
+  categoryId: number;
 }
 interface ProductVariant {
   id: number;
@@ -74,6 +83,11 @@ interface Order {
   shippingAddress: string;
   shippingParsed: ShippingAddress;
 }
+interface Icons {
+  id: number;
+  name: string;
+  products: Product[];
+}
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -81,6 +95,8 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [icons, setIcons] = useState<Icons[]>([]);
+  const [selectedIconIds, setSelectedIconIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -105,13 +121,21 @@ export default function AdminDashboard() {
             break;
           case "products":
             const productsRes = await fetch("/api/products");
+            const iconsRes = await fetch("/api/icons");
             const productsData = await productsRes.json();
+            const iconsData = await iconsRes.json();
+            setIcons(iconsData);
             setProducts(productsData);
             break;
           case "orders":
             const ordersRes = await fetch("/api/orders");
             const ordersData = await ordersRes.json();
             setOrders(ordersData);
+            break;
+          case "icons":
+            const iconsRes2 = await fetch("/api/icons");
+            const iconsData2 = await iconsRes2.json();
+            setIcons(iconsData2);
             break;
         }
       } catch (error) {
@@ -146,24 +170,32 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteImage = async (imagePath: string) => {
-    try {
+  const handleDeleteImage = async (imagePaths: string) => {
+  try {
+    for (const path of imagePaths) {
       const response = await fetch("/api/upload", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ path: imagePath }),
+        body: JSON.stringify({ path }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete image");
+        throw new Error(`Failed to delete image: ${path}`);
       }
-    } catch (error) {
-      console.error("Error deleting image:", error);
-      setUploadError("Failed to delete image");
     }
-  };
+  } catch (error) {
+    console.error("Error deleting images:", error);
+    setUploadError("Failed to delete images");
+  }
+};  
+
+const handleDeleteImages = async (imagePaths: string[]) => {
+  for (const path of imagePaths) {
+    await handleDeleteImage(path);
+  }
+};
 
   const handleAddCategory = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -199,25 +231,17 @@ export default function AdminDashboard() {
 const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   const formData = new FormData(e.currentTarget);
-  const imageFiles = formData.getAll("images") as File[];
+  const imageFiles  = formData.getAll("image") as File[];
 
   try {
-    // Upload multiple images
-    const uploadedImagePaths = await Promise.all(
-      imageFiles.map((file) => handleImageUpload(file))
-    );
-    const validImagePaths = uploadedImagePaths.filter(Boolean);
-
-    if (validImagePaths.length === 0) return;
-
-    // Collect traits
-    const traits: Traits[] = [];
-    const traitInputs = document.querySelectorAll<HTMLInputElement>('input[name="traits[]"]');
-    traitInputs.forEach((input) => {
-      if (input.value.trim()) {
-        traits.push({ id: 0, productId: 0, name: input.value.trim() });
+     const uploadedImagePaths: string[] = [];
+      for (const file of imageFiles) {
+        const path = await handleImageUpload(file);
+        if (path) {
+          uploadedImagePaths.push(path);
+        }
       }
-    });
+    if (!uploadedImagePaths.length) return;
 
     const res = await fetch("/api/products", {
       method: "POST",
@@ -226,15 +250,15 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
         name: formData.get("name"),
         description: formData.get("description"),
         price: parseFloat(formData.get("price") as string),
-        image: validImagePaths[0], // main image
         articlenr: formData.get("articlenr"),
         categoryId: parseInt(formData.get("categoryId") as string),
         isNew: formData.get("isNew") === "true",
         inStock: formData.get("inStock") === "true",
         deliveryCost: parseFloat(formData.get("deliveryCost") as string),
-        traits,
-        imges: validImagePaths.map((url) => ({ id: 0, productId: 0, url })),
+        traits: formData.get("traits"),
+        image: uploadedImagePaths.map(url => ({ url, productId: 0 })),
         variants: [],
+        iconIds: selectedIconIds,
       }),
     });
 
@@ -336,16 +360,20 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
   const handleEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const imageFile = formData.get("image") as File;
-
+    const imageFiles = formData.getAll("image") as File[];
     try {
-      let imagePath = editingProduct?.image;
-      
-      // Only upload new image if one is selected
-      // if (imageFile.size > 0) {
-      //   imagePath = await handleImageUpload(imageFile);
-      //   if (!imagePath) return;
-      // }
+        let uploadedImagePaths: string[] = [];
+
+      if (imageFiles.length > 0 && imageFiles[0]) {
+        uploadedImagePaths = [];
+        for (const file of imageFiles) {
+          const path = await handleImageUpload(file);
+          if (path) {
+            uploadedImagePaths.push(path);
+          }
+        }
+      }
+
 
       const res = await fetch(`/api/products/${editingProduct?.id}`, {
         method: "PATCH",
@@ -355,14 +383,14 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
           description: formData.get("description"),
           articlenr: formData.get("articlenr"),
           price: parseFloat(formData.get("price") as string),
-          image: imagePath,
+          image: uploadedImagePaths.length ? uploadedImagePaths.map(url => ({ url, productId: editingProduct?.id })) : editingProduct?.image,
           categoryId: parseInt(formData.get("categoryId") as string),
           isNew: formData.get("isNew") === "true",
           inStock: formData.get("inStock") === "true",
           deliveryCost: parseFloat(formData.get("deliveryCost") as string),
           variants: formData.get("productVariants") as string,
-          traits: formData.get("traits") as string,
-          imges: formData.get("imges") as string,
+          traits: formData.get("traits"),
+          iconIds: selectedIconIds,
         }),
       });
 
@@ -417,37 +445,87 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
 
       // Update the UI
       setCategories(categories.filter(category => category.id !== categoryId));
+      window.location.reload();
     } catch (error) {
       console.error("Error deleting category:", error);
       setUploadError("Failed to delete category");
     }
   };
 
-  const handleDeleteProduct = async (productId: number, imagePath: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) {
-      return;
+ const handleDeleteProduct = async (productId: number, imagePaths: string[]) => {
+  if (!confirm("Are you sure you want to delete this product?")) {
+    return;
+  }
+
+  try {
+    // First delete all images
+    await handleDeleteImages(imagePaths);
+
+    // Then delete the product
+    const response = await fetch(`/api/products/${productId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete product");
     }
 
-    try {
-      // First delete the image
-      await handleDeleteImage(imagePath);
+    // Update the UI
+    setProducts(products.filter((product) => product.id !== productId));
+    window.location.reload();
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    setUploadError("Failed to delete product");
+  }
+};
 
-      // Then delete the product
-      const response = await fetch(`/api/products/${productId}`, {
-        method: "DELETE",
-      });
+const handleAddIcon = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  const formData = new FormData(e.currentTarget);
+  const imageFile = formData.get("image") as File;
 
-      if (!response.ok) {
-        throw new Error("Failed to delete product");
-      }
+  try {
+    // Upload the image file
+    const imagePath = await handleImageUpload(imageFile); // Make sure this function exists
+    if (!imagePath) return;
 
-      // Update the UI
-      setProducts(products.filter(product => product.id !== productId));
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      setUploadError("Failed to delete product");
+    const res = await fetch("/api/icons", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: formData.get("name"),
+        url: imagePath, // this becomes the image URL in your DB
+      }),
+    });
+
+    if (res.ok) {
+      const newIcon = await res.json();
+      setIcons((prev) => [...prev, newIcon]);
+      e.currentTarget.reset(); // clear form inputs
     }
-  };
+  } catch (err) {
+    console.error("Failed to add icon:", err);
+    // Optional: set error message in state here
+  }
+};
+
+const handleDeleteIcon = async (id: number) => {
+  setIsLoading(true);
+  try {
+    const res = await fetch(`/api/icons/${id}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setIcons((prev) => prev.filter((icon) => icon.id !== id));
+      window.location.reload();
+    }
+  } catch (err) {
+    console.error("Failed to delete icon:", err);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const processedOrders = useMemo(() => {
     return orders.map((order) => {
@@ -517,6 +595,16 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
           }`}
         >
           Orders
+        </button>
+         <button
+          onClick={() => setActiveTab("icons")}
+          className={`px-4 py-2 rounded ${
+            activeTab === "icon"
+              ? "bg-[#d6ac0a] text-black"
+              : "bg-gray-200"
+          }`}
+        >
+          Iconen
         </button>
       </div>
 
@@ -641,6 +729,37 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
                 className="w-1/3 p-2 border rounded"
               />
             </div>
+             <div>
+              <label className="block mb-1">eigenschappen</label>
+              <textarea
+                name="traits"
+                required
+                placeholder="Waterdicht, UV-bescherming, Ademend"
+                defaultValue={editingProduct?.traits}
+                className="w-1/3 p-2 border rounded"
+              />
+            </div>
+             <label className="block mb-1">iconen</label>
+            <div className="grid grid-cols-24 gap-2 mt-2">
+              {icons.map((icon) => (
+                <label key={icon.id} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  value={icon.id}
+                  checked={selectedIconIds.includes(icon.id)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    const id = icon.id;
+
+                    setSelectedIconIds((prev) =>
+                      checked ? [...prev, id] : prev.filter((i) => i !== id)
+                    );
+                  }}
+                />
+                  {icon.name}
+                </label>
+              ))}
+            </div>
             <div>
               <label className="block mb-1">Artikelnummer</label>
               <input
@@ -651,26 +770,35 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
               />
             </div>
             <div>
-              <label className="block mb-1">Afbeelding</label>
+            <label className="block mb-1">Afbeeldingen</label>
               <input
                 type="file"
                 name="image"
                 accept="image/*"
+                multiple
                 required={!editingProduct}
                 className="w-1/5 p-2 border rounded"
               />
-              {editingProduct && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Current image: {editingProduct.image}
-                </p>
-              )}
+             <ul className="flex gap-2 mt-2">
+              {(editingProduct?.image ?? []).map((img) => (
+                <li key={img.id}>
+                  <img
+                    src={img.url}
+                    alt={`Product image ${img.id}`}
+                    className="w-24 h-24 object-cover rounded"
+                  />
+                </li>
+              ))}
+            </ul>
+
+
             </div>
             <div>
               <label className="block mb-1">Categorie</label>
               <select
                 name="categoryId"
                 required
-                defaultValue={editingProduct?.categoryId}
+                defaultValue={editingProduct?.categoryId ?? ""}
                 className="w-1/5 p-2 border rounded"
               >
                 {categories.map((category) => (
@@ -794,28 +922,6 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
                 </div>
               </div>
             )}
-         {editingProduct ? (
-              editingProduct.traits && editingProduct.traits.length > 0 ? (
-                <div className="border-t pt-6 space-y-4">
-                  {editingProduct.traits.map((trait) => (
-                    <div key={trait.id}>
-                      <input
-                        type="text"
-                        value={trait.name}
-                        onChange={(e) =>
-                          handleUpdateVariant(editingProduct.id, trait.id, {
-                            name: e.target.value,
-                          })
-                        }
-                        className="p-2 border rounded w-full"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">No traits added yet.</p>
-              )
-            ) : null}
             <div className="flex space-x-4">
               <button
                 type="submit"
@@ -844,12 +950,9 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
                 className="border rounded p-4"
               >
                 <h3 className="font-semibold">{product.name}</h3>
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-32 object-cover mt-2"
-                />
+
                 <p className="text-sm text-gray-600 mt-2">{product.description}</p>
+                
                 <p className="font-semibold mt-2">€{product.price}</p>
                 <p className="font-semibold mt-2">Artikelnummer: {product.articlenr}</p>
                 <div className="flex space-x-2 mt-2">
@@ -877,13 +980,13 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
                   </button>
                   
                   <button
-                    onClick={() => handleDeleteImage(product.image)}
+                    onClick={() => handleDeleteImages(product.image.map(img => img.url))}
                     className="text-red-600 hover:text-red-800"
                   >
                     Verwijder afbeelding
                   </button>
                   <button
-                    onClick={() => handleDeleteProduct(product.id, product.image)}
+                    onClick={() => handleDeleteProduct(product.id, product.image.map(img => img.url))}
                     className="text-red-600 hover:text-red-800"
                   >
                     Verwijder Product
@@ -895,94 +998,148 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
         </div>
       )}
 
-{activeTab === "orders" && (
-  <div>
-    <h2 className="text-xl font-semibold mb-4">Orders Lijst</h2>
-    <div className="space-y-4 w-4/5">
-      {processedOrders.map((order) => (
-        <div key={order.id} className="border rounded p-4">
-          <div className="space-y-2">
-            <p className="font-semibold text-lg">
-              Order #{order.id} – Date: {new Date(order.createdAt).toLocaleDateString()}
-            </p>
+      {activeTab === "orders" && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Orders Lijst</h2>
+          <div className="space-y-4 w-4/5">
+            {processedOrders.map((order) => (
+              <div key={order.id} className="border rounded p-4">
+                <div className="space-y-2">
+                  <p className="font-semibold text-lg">
+                    Order #{order.id} – Date: {new Date(order.createdAt).toLocaleDateString()}
+                  </p>
 
-            {/* Ordered Products */}
-            <div>
-              <p className="font-semibold mb-1">Bestelde Producten:</p>
-              <div className="border rounded p-4 bg-white">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Product</th>
-                      <th className="text-right py-2">Aantal</th>
-                      <th className="text-right py-2">Prijs per stuk</th>
-                      <th className="text-right py-2">Totaal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {order.orderItems?.map((item: OrderItem, idx: number) => (
-                      <tr key={idx} className="border-b">
-                        <td className="py-2">
-                          <div className="flex items-center">
-                            <img 
-                              src={item.product.image} 
-                              alt={item.product.name}
-                              className="w-12 h-12 object-contain mr-3"
-                            />
-                            <div>
-                              <p className="font-medium">{item.product.name}</p>
-                              <p className="text-sm text-gray-500">Artikelnummer: {item.product.articlenr}</p>
-                              <p className="text-sm text-gray-500">variant: {item.variant?.name}</p> 
-                            </div>
-                          </div>
-                        </td>
-                        <td className="text-right py-2">{item.quantity}</td>
-                        <td className="text-right py-2">€{item.price.toFixed(2)}</td>
-                        <td className="text-right py-2">€{(item.price * item.quantity).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="font-bold">
-                      <td colSpan={3} className="text-right py-2">Totaal:</td>
-                      <td className="text-right py-2">€{order.totalPrice.toFixed(2)}</td>
-                    </tr>
-                  </tfoot>
-                </table>
+                  {/* Ordered Products */}
+                  <div>
+                    <p className="font-semibold mb-1">Bestelde Producten:</p>
+                    <div className="border rounded p-4 bg-white">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-2">Product</th>
+                            <th className="text-right py-2">Aantal</th>
+                            <th className="text-right py-2">Prijs per stuk</th>
+                            <th className="text-right py-2">Totaal</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {order.orderItems?.map((item: OrderItem, idx: number) => (
+                            <tr key={idx} className="border-b">
+                              <td className="py-2">
+                                <div className="flex items-center">
+                                 
+                                  <div>
+                                    <p className="font-medium">{item.product.name}</p>
+                                    <p className="text-sm text-gray-500">Artikelnummer: {item.product.articlenr}</p>
+                                    <p className="text-sm text-gray-500">variant: {item.variant?.name}</p> 
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="text-right py-2">{item.quantity}</td>
+                              <td className="text-right py-2">€{item.price.toFixed(2)}</td>
+                              <td className="text-right py-2">€{(item.price * item.quantity).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="font-bold">
+                            <td colSpan={3} className="text-right py-2">Totaal:</td>
+                            <td className="text-right py-2">€{order.totalPrice.toFixed(2)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* User Info */}
+                  <div className="text-sm text-gray-600">
+                    <p className="font-semibold text-lg">Gebruiker:</p>
+                    <p>Voornaam:{order.shippingParsed.firstName} Achternaam:{order.shippingParsed.lastName}</p>
+                    {order.shippingParsed.company && (
+                      <p>Bedrijf: {order.shippingParsed.company}</p>
+                    )}
+                    <p>Straatnaam:{order.shippingParsed.street} Postcode:{order.shippingParsed.postalCode} Plaats:{order.shippingParsed.city}</p>
+                    <p>Telefoon: {order.shippingParsed.phone}</p>
+                  </div>
+
+                  {/* Status */}
+                  <div>
+                    <select
+                      value={order.status}
+                      onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                      className="p-2 border rounded w-full sm:w-auto"
+                    >
+                      <option value="PENDING">Pending</option>
+                      <option value="PROCESSING">Processing</option>
+                      <option value="SHIPPED">Shipped</option>
+                      <option value="DELIVERED">Delivered</option>
+                      <option value="CANCELLED">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-            </div>
-
-            {/* User Info */}
-            <div className="text-sm text-gray-600">
-              <p className="font-semibold text-lg">Gebruiker:</p>
-              <p>Voornaam:{order.shippingParsed.firstName} Achternaam:{order.shippingParsed.lastName}</p>
-              {order.shippingParsed.company && (
-                <p>Bedrijf: {order.shippingParsed.company}</p>
-              )}
-              <p>Straatnaam:{order.shippingParsed.street} Postcode:{order.shippingParsed.postalCode} Plaats:{order.shippingParsed.city}</p>
-              <p>Telefoon: {order.shippingParsed.phone}</p>
-            </div>
-
-            {/* Status */}
-            <div>
-              <select
-                value={order.status}
-                onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                className="p-2 border rounded w-full sm:w-auto"
-              >
-                <option value="PENDING">Pending</option>
-                <option value="PROCESSING">Processing</option>
-                <option value="SHIPPED">Shipped</option>
-                <option value="DELIVERED">Delivered</option>
-                <option value="CANCELLED">Cancelled</option>
-              </select>
-            </div>
+            ))}
           </div>
         </div>
-      ))}
-    </div>
-  </div>
-)}
+      )}
+
+     {activeTab === "icons" && (
+      <form onSubmit={handleAddIcon} className="flex flex-col gap-3 mb-6 max-w-md">
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Iconen</h2>
+          <p className="mb-4">Hier kun je iconen beheren.</p>
+
+          {/* Add Icon Form */}
+          <div className="flex flex-col gap-3 mb-6 max-w-md">
+            <div>
+              <label className="block mb-1 font-medium">Naam</label>
+              <input
+                type="text"
+                name="name" 
+                placeholder="Bijv. UV-bestendig, Waterwerend, Hitte bestendig"
+                className="w-full p-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium">Afbeelding</label>
+             <input
+                type="file"
+                name="image"
+                accept="image/*"
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isLoading ? "Toevoegen..." : "Toevoegen"}
+            </button>
+          </div>
+
+          {/* Icon List */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {icons.map((icon) => (
+              <div key={icon.id} className="border p-2 rounded flex flex-col items-center text-center">
+                <img src={icon.url} alt={icon.name} className="w-16 h-16 object-contain mb-2" />
+                <p className="text-sm font-medium">{icon.name}</p>
+                <button
+                  onClick={() => handleDeleteIcon(icon.id)}
+                  disabled={isLoading}
+                  className="text-sm text-red-600 hover:underline mt-2"
+                >
+                  Verwijderen
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </form>
+      )}
+
 
     </div>
   );

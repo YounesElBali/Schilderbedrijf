@@ -3,6 +3,8 @@ import { writeFile, unlink } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
 
+const IMAGES_DIR = "/var/www/images";
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -18,21 +20,17 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Create unique filename
     const uniqueId = uuidv4();
     const extension = file.name.split(".").pop();
     const filename = `${uniqueId}.${extension}`;
+    const filepath = join(IMAGES_DIR, filename);
 
-    // Ensure the images directory exists
-    const imagesDir = join(process.cwd(), "public", "images");
-    const filepath = join(imagesDir, filename);
-
-    // Save the file
+    // Save the file to /var/www/images
     await writeFile(filepath, buffer);
 
-    // Return the relative path
+    // Return the filename or the path (adjust to your needs)
     return NextResponse.json({ 
-      path: `/images/${filename}`,
+      path: `/images/${filename}`,  // This assumes your web server serves /var/www/images as /images
       message: "File uploaded successfully" 
     });
   } catch (error) {
@@ -55,9 +53,8 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Remove the leading slash to get the relative path
     const relativePath = path.startsWith("/") ? path.slice(1) : path;
-    const filepath = join(process.cwd(), "public", relativePath);
+    const filepath = join("/var/www", relativePath); // Since path is like /images/filename.jpg
 
     // Delete the file
     await unlink(filepath);
@@ -72,4 +69,4 @@ export async function DELETE(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

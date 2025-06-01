@@ -26,17 +26,9 @@ export async function GET() {
     }
 
     // Format the response to match the expected structure
-    const formattedProducts = bestsellers.map(bestseller => ({
-      id: bestseller.product.id,
-      name: bestseller.product.name,
-      price: bestseller.product.price,
-      image: bestseller.product.image,
-      isNew: bestseller.product.isNew,
-      category: bestseller.product.category,
-      articlenr: bestseller.product.articlenr
-    }));
+  
 
-    return NextResponse.json(formattedProducts);
+    return NextResponse.json(null, { status: 204 });
   } catch (error) {
     console.error('Error fetching bestsellers:', error);
     return NextResponse.json(

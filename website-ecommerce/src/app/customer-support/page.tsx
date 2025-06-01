@@ -15,12 +15,6 @@ export default function CustomerSupport() {
               </a>
             </p>
             <p>
-              <strong>Telefoon:</strong><br />
-              <a href="tel:+31612345678" className="text-[#d6ac0a] hover:underline">
-                number
-              </a>
-            </p>
-            <p>
               <strong>Adres:</strong><br />
               Schilderstraat 123<br />
               1234 AB Amsterdam

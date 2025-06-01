@@ -3,13 +3,19 @@ import { useCart } from "@/contexts/CartContext";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+interface ProductImage {
+  id: number;
+  url: string;
+}
+
 interface Product {
   id: string;
   name: string;
   price: number;
-  image: string;
+  image: ProductImage[];
   category: string;
 }
+
 
 export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeModal: () => void }) {
   const { cart, removeFromCart, updateQuantity } = useCart();
@@ -83,7 +89,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
             {cart.map((item) => (
               <div key={`${item.id}-${item.variantId || 'base'}`} className="border rounded-sm p-4 mb-4 flex">
                 <div className="w-24 h-24 bg-gray-100 mr-4 flex items-center justify-center">
-                  <img src={item.image} alt={item.name} className="max-w-full max-h-full" />
+                  <img src={item.image?.[0]?.url || '/placeholder.png'} alt={item.name} className="max-w-full max-h-full" />
                 </div>
                 <div className="flex-grow">
                   <h4 className="font-bold">{item.name}</h4>
@@ -134,14 +140,15 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
         </div>
 
         {/* Recommended Products (Always visible) */}
-        <div className="mt-8">
+        {/* <div className="mt-8">
           <h3 className="text-xl font-bold mb-4">Aanbevolen voor jou</h3>
           <div className="space-y-4">
             {!isLoading ? (
               recommendedProducts.map((product) => (
                 <div key={product.id} className="border rounded-sm p-4 flex items-center">
                   <div className="w-16 h-16 bg-gray-100 mr-4 flex items-center justify-center">
-                    <img src={product.image} alt={product.name} className="max-w-full max-h-full" />
+                    <img src={product.image?.[0]?.url || '/placeholder.png'} alt={product.name} className="max-w-full max-h-full" />
+
                   </div>
                   <div className="flex-grow">
                     <h4 className="font-medium">{product.name}</h4>
@@ -161,7 +168,7 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
               <div>Loading recommended products...</div>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* Checkout Button */}
        

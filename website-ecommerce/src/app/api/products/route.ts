@@ -22,7 +22,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, description, price, image, categoryId, isNew, inStock, articlenr } = await request.json();
+    const { name, description, price, image, categoryId, isNew, inStock, articlenr, traits, iconIds} = await request.json();
 
     if (!name || !price || !image || !categoryId || !articlenr) {
       return NextResponse.json(
@@ -34,18 +34,41 @@ export async function POST(request: Request) {
     const product = await prisma.product.create({
       data: {
         name,
+        traits,
         description,
         price: parseFloat(price),
-        image,
         categoryId: parseInt(categoryId),
         isNew: isNew || false,
         inStock: inStock || true,
+        
       articlenr,
+       images: {
+          create: image.map((img: { url: string }) => ({
+            url: img.url,
+          })),
+        },
+     
+        productImages: iconIds && iconIds.length > 0
+          ? {
+              create: iconIds.map((iconId: number) => ({
+                productImage: {
+                  connect: { id: iconId },
+                },
+              })),
+            }
+          : undefined,
       },
       include: {
         category: true,
+        images: true,
+        productImages: {
+          include: {
+            productImage: true,
+          },
+        },
       },
     });
+ 
 
     return NextResponse.json(product);
   } catch (error) {

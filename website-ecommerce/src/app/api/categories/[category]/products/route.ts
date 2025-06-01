@@ -29,7 +29,10 @@ export async function GET(
       },
       orderBy: {
         name: 'asc'
-      }
+      },
+      include: {
+        images: true,  // or whatever your relation field name is
+      },
     });
 
     return NextResponse.json(products);

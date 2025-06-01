@@ -11,6 +11,10 @@ export async function POST(request: Request) {
       orderBy: {
         id: 'asc',  // Order by ascending ID (or use 'createdAt' if you prefer)
       },
+      include: {
+        category: true,  // Include category information
+        images: true,    // Include images if needed
+      },
     });
 
     return NextResponse.json(recommendedProducts);

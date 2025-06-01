@@ -3,25 +3,30 @@ import React, { use, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-interface Product 
- {
+interface ProductImage {
+  id: number;
+  url: string;
+}
+
+interface Product {
   id: number;
   name: string;
   price: number;
-  image: string;
+  images: ProductImage[]; // array of images
   isNew: boolean;
 }
 
 // Assuming this file is in the path `app/category/[category]/page.tsx`
-export default function TapeMaterialenListing({ params }:  { params: Promise<{ category: string }> }) {
-  const categoryParam =  use(params);
-  console.log("testing what is in the params: "+categoryParam.category);
+export default function TapeMaterialenListing({ params }: { params: Promise<{ category: string }> }) {
+  const categoryParam = use(params);
+  console.log("testing what is in the params: " + categoryParam.category);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState('name-asc');
- 
-  // Add sorting function
+
+  // Sorting function
   const sortProducts = (products: Product[], option: string) => {
     const sortedProducts = [...products];
     switch (option) {
@@ -38,7 +43,7 @@ export default function TapeMaterialenListing({ params }:  { params: Promise<{ c
     }
   };
 
-
+  // Fetch products by category
   const fetchProductsByCategory = async (categorySlug: string) => {
     setLoading(true);
     try {
@@ -57,13 +62,12 @@ export default function TapeMaterialenListing({ params }:  { params: Promise<{ c
     }
   };
 
-  // Fetch products when categoryParam changes
   useEffect(() => {
     if (categoryParam) {
       console.log('Category param changed, fetching products for:', categoryParam);
       fetchProductsByCategory(categoryParam.category);
     }
-  }, [categoryParam]); // Only trigger when categoryParam changes
+  }, [categoryParam]);
 
   return (
     <div>
@@ -98,41 +102,47 @@ export default function TapeMaterialenListing({ params }:  { params: Promise<{ c
 
             {loading && <p>Loading products...</p>}
 
-
             {!loading && products.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                {sortProducts(products, sortOption).map((product) => (
-                  <div key={product.id} className="border border-gray-200 rounded-md overflow-hidden">
-                    <div className="relative">
-                      {product.isNew && (
-                        <div className="absolute top-0 left-0 transform -rotate-45 translate-x-[-30%] translate-y-[40%] bg-yellow-400 text-xs font-bold px-4 py-0.5">
-                          NIEUW
-                        </div>
-                      )}
-                      <Link 
-                        href={`/products/${product.id}`} 
-                        className="font-bold text-sm hover:text-blue-600 transition-colors"
-                      >
-                        <Image
-                          src={product.image}
-                          alt={product.name}
+                {sortProducts(products, sortOption).map((product) => {
+                  // Determine the first image URL or use placeholder
+                  const firstImage =
+                    product.images && product.images.length > 0
+                      ? product.images[0].url
+                      : '/placeholder.png';
+
+                  return (
+                    <div key={product.id} className="border border-gray-200 rounded-md overflow-hidden">
+                      <div className="relative">
+                        {product.isNew && (
+                          <div className="absolute top-0 left-0 transform -rotate-45 translate-x-[-30%] translate-y-[40%] bg-yellow-400 text-xs font-bold px-4 py-0.5">
+                            NIEUW
+                          </div>
+                        )}
+                        <Link
+                          href={`/products/${product.id}`}
+                          className="font-bold text-sm hover:text-blue-600 transition-colors"
+                        >
+                          <Image
+                            src={firstImage}
+                            alt={product.name}
                             width={200}
-                             height={128}
-                          className="w-full h-32 object-contain p-2"
-                        />
-                      </Link>
+                            height={128}
+                            className="w-full h-32 object-contain p-2"
+                          />
+                        </Link>
+                      </div>
+                      <p className="text-sm text-center px-1">{product.name}</p>
+                      <p className="text-base font-bold mb-1 px-1">
+                        €{product.price.toFixed(2)} incl. BTW
+                      </p>
                     </div>
-                    <p className="text-sm text-center px-1">{product.name}</p>
-                    <p className="text-base font-bold mb-1 px-1">€{product.price.toFixed(2)} incl. BTW</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
-            {/* No products available */}
-            {!loading && products.length === 0 && (
-              <p>No products found in this category.</p>
-            )}
+            {!loading && products.length === 0 && <p>No products found in this category.</p>}
           </div>
         </div>
       </div>

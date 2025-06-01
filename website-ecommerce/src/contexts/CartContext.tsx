@@ -7,11 +7,15 @@ interface Product {
   id: number;
   name: string;
   price: number;
-  image: string;
+  image: Images[];
   articlenr:string;
   quantity?: number;
   variantId?: number;
   variantName?: string;
+}
+interface Images {
+  id: number;
+  url: string;
 }
 
 // Define cart context type

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { EmptyCartModal } from "../Shopping/ShoppingCartHomePage";
 import { ProductCategories } from "../Menu/Products";
-import { BestsellersSection } from "../Menu/BestSeller";
 import { TestimonialCarousel } from "../Menu/Comments";
 
 export function Menu() {

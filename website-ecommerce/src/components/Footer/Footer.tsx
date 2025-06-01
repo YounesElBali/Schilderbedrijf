@@ -9,7 +9,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">Over Ons</h3>
             <p className="text-gray-300">
-              Pastoolz is uw specialist in hoogwaardige materialen.
+              PAStoolz is uw specialist in hoogwaardige materialen.
               Wij bieden een breed assortiment aan producten voor zowel professionals als doe-het-zelvers.
             </p>
             <br/>

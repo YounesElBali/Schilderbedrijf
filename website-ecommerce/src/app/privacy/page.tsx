@@ -117,7 +117,6 @@ export default function Privacy() {
             <br />
             E-mail: info@pastoolz.nl
             <br />
-            Telefoon: [Uw telefoonnummer]
           </p>
         </section>
       </div>
