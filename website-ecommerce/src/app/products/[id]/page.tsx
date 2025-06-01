@@ -185,13 +185,13 @@ const allImages = (product.images || []);
           {/* Image Gallery */}
        <div className="space-y-4">
         <div className="relative aspect-square rounded-lg overflow-hidden bg-white">
-          <Image
+          <img
              src={allImages[selectedImageIndex].url}
             alt={product.name}
-            fill
+            
             className="object-contain"
             sizes="(max-width: 768px) 100vw, 50vw"
-            priority
+            
           />
         </div>
         {allImages.length > 1 && (
@@ -206,10 +206,10 @@ const allImages = (product.images || []);
                         : 'ring-1 ring-gray-200'
                     }`}
               >
-                <Image
+                <img
                   src={image.url}
                   alt={`${product.name} - Image ${index + 1}`}
-                  fill
+                  
                   className="object-cover"
                   sizes="(max-width: 768px) 25vw, 12.5vw"
                 />
@@ -305,10 +305,10 @@ const allImages = (product.images || []);
                 <div className="grid grid-cols-4 gap-2 mt-4">
                   {product.productImages.map((imgUsage) => (
                     <div key={imgUsage.productId} className="relative aspect-square rounded-md overflow-hidden ring-1 ring-gray-200 hover:ring-blue-500 cursor-pointer">
-                      <Image
+                      <img
                         src={imgUsage.productImage.url}
                         alt={`${product.name} - Additional Image`}
-                        fill
+                        
                         className="object-cover"
                         sizes="(max-width: 768px) 25vw, 12.5vw"
                       />

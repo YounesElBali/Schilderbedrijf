@@ -123,7 +123,7 @@ export default function TapeMaterialenListing({ params }: { params: Promise<{ ca
                           href={`/products/${product.id}`}
                           className="font-bold text-sm hover:text-blue-600 transition-colors"
                         >
-                          <Image
+                          <img
                             src={firstImage}
                             alt={product.name}
                             width={200}
