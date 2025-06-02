@@ -63,9 +63,17 @@ await prisma.productProductImage.deleteMany({
   where: { productId: idNumber }
 });
 
-prisma.images.deleteMany({
-    where: { productId: idNumber },
-  }),
+// Get current image URLs from DB
+const existingImages = await prisma.images.findMany({
+  where: { productId: idNumber },
+  select: { url: true },
+});
+
+const existingUrls = new Set(existingImages.map(img => img.url));
+
+// Filter out images that already exist
+const newImages = images?.filter((img: { url: string }) => !existingUrls.has(img.url)) || [];
+
 
 // 2. Voeg nieuwe relaties toe via de join table
 await prisma.productProductImage.createMany({

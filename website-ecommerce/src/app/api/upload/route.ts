@@ -48,32 +48,55 @@ export async function POST(request: Request) {
     );
   }
 }
+import prisma from '@/lib/prisma'; // your Prisma client import
 
 export async function DELETE(request: Request) {
   try {
     const { path } = await request.json();
 
-    if (!path) {
+    if (!path || path === "/images/" || path === "/images") {
       return NextResponse.json(
-        { message: "No file path provided" },
+        { message: "Invalid or missing file path" },
         { status: 400 }
       );
     }
 
-    const relativePath = path.startsWith("/") ? path.slice(1) : path;
-    const filepath = join(IMAGES_DIR, relativePath); // Since path is like /images/filename.jpg
+    const filename = path.replace(/^\/?images\//, "").trim();
+    if (!filename) {
+      return NextResponse.json(
+        { message: "No valid filename found" },
+        { status: 400 }
+      );
+    }
 
-    // Delete the file
+    const filepath = join(IMAGES_DIR, filename);
+    console.log("Deleting file:", filepath); // Debug
+
+    // 1. Delete the file from disk
     await unlink(filepath);
 
-    return NextResponse.json({ 
-      message: "File deleted successfully" 
+    // 2. Delete the image record in DB by matching url (assuming url is stored as `/images/filename.jpg`)
+    const deletedImage = await prisma.images.deleteMany({
+      where: {
+        url: `/images/${filename}`,
+      },
+    });
+
+    console.log("Deleted image record count:", deletedImage.count);
+
+    return NextResponse.json({
+      message: "File and DB record deleted successfully",
+      deletedImageCount: deletedImage.count,
     });
   } catch (error) {
-    console.error("Error deleting file:", error);
+    console.error("Error deleting file and DB record:", error);
     return NextResponse.json(
-      { message: "Error deleting file" },
+      {
+        message: "Error deleting file",
+        error: error instanceof Error ? error.message : error,
+      },
       { status: 500 }
     );
   }
 }
+
