@@ -115,7 +115,7 @@ export default function Privacy() {
           <p className="text-gray-600">
             Voor vragen over ons privacybeleid of uw persoonlijke gegevens kunt u contact met ons opnemen via:
             <br />
-            E-mail: info@pastoolz.nl
+            E-mail: pastoolz@hotmail.com
             <br />
           </p>
         </section>

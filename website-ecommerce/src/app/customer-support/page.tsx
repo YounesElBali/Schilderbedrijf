@@ -10,14 +10,14 @@ export default function CustomerSupport() {
           <div className="space-y-4">
             <p>
               <strong>Email:</strong><br />
-              <a href="mailto:info@pastoolz.nl" className="text-[#d6ac0a] hover:underline">
-                info@pastoolz.nl
+              <a href="mailto:pastoolz@hotmail.com" className="text-[#d6ac0a] hover:underline">
+                pastoolz@hotmail.com
               </a>
             </p>
             <p>
               <strong>Adres:</strong><br />
-              Schilderstraat 123<br />
-              1234 AB Amsterdam
+              Componistenlaan 71 <br />
+              Gouda
             </p>
           </div>
         </div>

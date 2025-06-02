@@ -29,7 +29,7 @@ export async function sendOrderConfirmationEmail( orderData: any, createdOrder: 
         We hebben je bestelling succesvol ontvangen. We gaan zo snel mogelijk aan de slag om je producten te verpakken en te verzenden.
       </p>
       <p>
-        Heb je vragen? Neem gerust contact op met onze klantenservice via <a href="mailto:info@pastoolz.nl">info@pastoolz.nl</a>.
+        Heb je vragen? Neem gerust contact op met onze klantenservice via <a href="mailto:pastoolz@hotmail.com">pastoolz@hotmail.com</a>.
       </p>
       <p style="margin-top: 32px;">
         Met vriendelijke groet,<br/>
@@ -71,7 +71,7 @@ export async function sendTrackAndTraceEmail(orderData: any, trackingInfo: any) 
           <strong>Volg je pakket:</strong> <a href="${trackingLink}" target="_blank">${trackingLink}</a>
         </p>
         <p>
-          Als je vragen hebt over je levering, neem gerust contact met ons op via <a href="mailto:info@pastoolz.nl">info@pastoolz.nl</a>.
+          Als je vragen hebt over je levering, neem gerust contact met ons op via <a href="mailto:pastoolz@hotmail.com">pastoolz@hotmail.com</a>.
         </p>
         <p style="margin-top: 32px;">
           Met vriendelijke groet,<br/>
