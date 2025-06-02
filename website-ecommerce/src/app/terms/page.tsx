@@ -27,7 +27,7 @@ export default function Terms() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Licentie</h2>
             <p className="text-gray-600 mb-4">
-              Tenzij anders vermeld, bezit Schilderbedrijf en/of zijn licentiegevers de intellectuele eigendomsrechten
+              Tenzij anders vermeld, bezit PAStoolz en/of zijn licentiegevers de intellectuele eigendomsrechten
               voor alle gegevens op onze website. Alle intellectuele eigendomsrechten zijn voorbehouden.
             </p>
             <p className="text-gray-600 mb-4">Je mag geen:</p>
