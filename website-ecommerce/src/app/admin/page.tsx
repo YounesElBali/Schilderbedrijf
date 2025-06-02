@@ -122,8 +122,12 @@ export default function AdminDashboard() {
           case "products":
             const productsRes = await fetch("/api/products");
             const iconsRes = await fetch("/api/icons");
-            const productsData = await productsRes.json();
+            const productsDataRaw = await productsRes.json();
             const iconsData = await iconsRes.json();
+            const productsData = productsDataRaw.map((p: any) => ({
+                ...p,
+                image: Array.isArray(p.image) ? p.image : [],  // guarantee image is always an array
+              }));
             setIcons(iconsData);
             setProducts(productsData);
             break;
@@ -193,6 +197,7 @@ export default function AdminDashboard() {
 
 const handleDeleteImages = async (imagePaths: string[]) => {
   for (const path of imagePaths) {
+    console.log("Deleting image:", path);
     await handleDeleteImage(path);
   }
 };
@@ -383,7 +388,7 @@ const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
           description: formData.get("description"),
           articlenr: formData.get("articlenr"),
           price: parseFloat(formData.get("price") as string),
-          image: uploadedImagePaths.length ? uploadedImagePaths.map(url => ({ url, productId: editingProduct?.id })) : editingProduct?.image,
+          images: uploadedImagePaths.length ? uploadedImagePaths.map(url => ({ url, productId: editingProduct?.id })) : editingProduct?.image,
           categoryId: parseInt(formData.get("categoryId") as string),
           isNew: formData.get("isNew") === "true",
           inStock: formData.get("inStock") === "true",
@@ -980,7 +985,7 @@ const handleDeleteIcon = async (id: number) => {
                   </button>
                   
                   <button
-                    onClick={() => handleDeleteImages(product.image.map(img => img.url))}
+                    onClick={() => handleDeleteImages((product.image).map(img => img.url))}
                     className="text-red-600 hover:text-red-800"
                   >
                     Verwijder afbeelding

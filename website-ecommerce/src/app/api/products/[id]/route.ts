@@ -63,6 +63,10 @@ await prisma.productProductImage.deleteMany({
   where: { productId: idNumber }
 });
 
+prisma.images.deleteMany({
+    where: { productId: idNumber },
+  }),
+
 // 2. Voeg nieuwe relaties toe via de join table
 await prisma.productProductImage.createMany({
   data: iconIds.map((iconId: number) => ({

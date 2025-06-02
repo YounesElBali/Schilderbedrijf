@@ -2,8 +2,15 @@ import { NextResponse } from "next/server";
 import { writeFile, unlink } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
+import { cwd } from "process";
 
-const IMAGES_DIR = "/var/www/images";
+export const config = {
+  api: {
+    bodyParser: false,  // important! disable Next.js body parsing for this route
+  },
+};
+
+const IMAGES_DIR = join(cwd(), "public", "images");
 
 export async function POST(request: Request) {
   try {
@@ -54,7 +61,7 @@ export async function DELETE(request: Request) {
     }
 
     const relativePath = path.startsWith("/") ? path.slice(1) : path;
-    const filepath = join("/var/www", relativePath); // Since path is like /images/filename.jpg
+    const filepath = join(IMAGES_DIR, relativePath); // Since path is like /images/filename.jpg
 
     // Delete the file
     await unlink(filepath);
