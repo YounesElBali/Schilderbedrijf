@@ -6,8 +6,8 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false, // true for 465, false for other ports
   auth: {
-    user: '89e6a9003@smtp-brevo.com', // this data has been changed to not include dummy data
-    pass: 'jvHp8cAnxEm3JYwO',         // this data has been changed to not include dummy data
+    user: '89e6a9003@smtp-brevo.com', // this data has been changed to include dummy data
+    pass: 'jvHp8cAnxEm3JYwO',         // this data has been changed to include dummy data
   },
 });
 
