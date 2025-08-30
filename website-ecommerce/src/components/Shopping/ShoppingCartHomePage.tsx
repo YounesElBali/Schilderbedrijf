@@ -138,39 +138,6 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
             </button>
           </Link>
         </div>
-
-        {/* Recommended Products (Always visible) */}
-        {/* <div className="mt-8">
-          <h3 className="text-xl font-bold mb-4">Aanbevolen voor jou</h3>
-          <div className="space-y-4">
-            {!isLoading ? (
-              recommendedProducts.map((product) => (
-                <div key={product.id} className="border rounded-sm p-4 flex items-center">
-                  <div className="w-16 h-16 bg-gray-100 mr-4 flex items-center justify-center">
-                    <img src={product.image?.[0]?.url || '/placeholder.png'} alt={product.name} className="max-w-full max-h-full" />
-
-                  </div>
-                  <div className="flex-grow">
-                    <h4 className="font-medium">{product.name}</h4>
-                    <p className="text-lg font-semibold mt-1">€{product.price.toFixed(2)}</p>
-                  </div>
-                  <Link href={`/products/${product.id}`}>
-                    <button 
-                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-                      onClick={closeModal}
-                    >
-                      Bekijken
-                    </button>
-                  </Link>
-                </div>
-              ))
-            ) : (
-              <div>Loading recommended products...</div>
-            )}
-          </div>
-        </div> */}
-
-        {/* Checkout Button */}
        
       </div>
     </>

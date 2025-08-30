@@ -1,6 +1,7 @@
 'use client';
 import React, {use, useState, useEffect } from 'react';
 import { useCart } from '@/contexts/CartContext';
+import { usePricing } from '@/contexts/PriceContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -52,6 +53,7 @@ interface Product {
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { addToCart } = useCart();
+  const { calculatePrice, formatPrice, getCountryData } = usePricing();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +61,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [categories, setCategories] = useState<{ id: number; name: string; image: string; path: string }[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -100,13 +103,25 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     fetchCategories();
   }, []);
   
+  // Get the current price (base price or variant price)
+  const getCurrentBasePrice = () => {
+    return selectedVariant?.price || product?.price || 0;
+  };
+
+  // Get the display price with VAT calculation
+  const getCurrentDisplayPrice = () => {
+    const basePrice = getCurrentBasePrice();
+    return calculatePrice(basePrice);
+  };
 
   const handleAddToCart = () => {
     if (product) {
+      const basePrice = getCurrentBasePrice();
+      
       addToCart({
         id: product.id,
         name: product.name,
-        price: selectedVariant?.price || product.price,
+        price: basePrice, // Store base price in cart
         image: product.images && product.images.length > 0 
         ? [{ id: product.images[0].id, url: product.images[0].url }] 
         : [],
@@ -136,6 +151,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   }
 
 const allImages = (product.images || []);
+const countryData = getCountryData();
+const basePrice = getCurrentBasePrice();
+const displayPrice = getCurrentDisplayPrice();
 
   const category = categories.find((cat) => cat.id === (product as any)?.categoryId);
 
@@ -237,10 +255,19 @@ const allImages = (product.images || []);
               </div>
             </div>
             
+            {/* Price Display with VAT info */}
             <div className="mb-6">
               <p className="text-2xl font-bold text-black">
-                €{selectedVariant?.price ? selectedVariant.price.toFixed(2) : product.price.toFixed(2)} incl. BTW
+                €{displayPrice.toFixed(2)}
               </p>
+              <p className="text-sm text-gray-600">
+                {countryData?.withVAT ? 'inclusief' : 'exclusief'} BTW
+              </p>
+              {countryData?.withVAT && (
+                <p className="text-xs text-gray-500">
+                  (€{basePrice.toFixed(2)} excl. BTW)
+                </p>
+              )}
             </div>
 
             {/* Variant Selection */}
@@ -248,21 +275,32 @@ const allImages = (product.images || []);
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-2">Selecteer variant</h3>
                 <div className="flex flex-wrap gap-2">
-                  {product.variants.map((variant) => (
-                    <button
-                      key={variant.id}
-                      onClick={() => setSelectedVariant(variant)}
-                      className={`px-4 py-2 border rounded-md ${
-                        selectedVariant?.id === variant.id
-                          ? 'bg-[#d6ac0a] text-black border-[#d6ac0a]'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
-                      } ${!variant.inStock ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      disabled={!variant.inStock}
-                    >
-                      {variant.name}
-                      {!variant.inStock && <span className="ml-1 text-xs">(Niet op voorraad)</span>}
-                    </button>
-                  ))}
+                  {product.variants.map((variant) => {
+                    const variantDisplayPrice = calculatePrice(variant.price || product.price);
+                    
+                    return (
+                      <button
+                        key={variant.id}
+                        onClick={() => setSelectedVariant(variant)}
+                        className={`px-4 py-2 border rounded-md ${
+                          selectedVariant?.id === variant.id
+                            ? 'bg-[#d6ac0a] text-black border-[#d6ac0a]'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                        } ${!variant.inStock ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={!variant.inStock}
+                      >
+                        <div className="text-left">
+                          <div>{variant.name}</div>
+                          {variant.price && variant.price !== product.price && (
+                            <div className="text-xs">
+                              €{variantDisplayPrice.toFixed(2)} {countryData?.withVAT ? 'incl.' : 'excl.'} BTW
+                            </div>
+                          )}
+                        </div>
+                        {!variant.inStock && <span className="ml-1 text-xs">(Niet op voorraad)</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -353,4 +391,4 @@ const allImages = (product.images || []);
       </div>
     </div>
   );
-} 
+}

@@ -1,69 +1,62 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
     const comments = await prisma.comment.findMany({
       include: {
-        user: {
-          select: {
-            firstname: true,
-            lastname: true,
-          },
-        },
+        user: { select: { firstname: true, lastname: true } },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json(comments);
+
+    const data = comments.map(c => ({
+      id: c.id,
+      rating: c.rating,
+      title: c.title,
+      content: c.content,
+      createdAt: c.createdAt.toISOString(),
+      user: {
+        firstname: c.user.firstname,
+        lastname: c.user.lastname,
+      },
+    }));
+
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching comments:", error);
-    return NextResponse.json(
-      { message: "Error fetching comments" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Error fetching comments" }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const { rating, title, content, userId } = await request.json();
-
-    if (!rating || !title || !content || !userId) {
-      return NextResponse.json(
-        { message: "Missing required fields" },
-        { status: 400 }
-      );
-    }
-
-    const comment = await prisma.comment.create({
+    const body = await req.json();
+    const created = await prisma.comment.create({
       data: {
-        rating,
-        title,
-        content,
-        userId: parseInt(userId),
+        rating: body.rating,
+        title: body.title,
+        content: body.content,
+        user: { connect: { id: body.userId } },
       },
-      include: {
-        user: {
-          select: {
-            firstname: true,
-            lastname: true,
-          },
-        },
-      },
+      include: { user: { select: { firstname: true, lastname: true } } },
     });
 
-    return NextResponse.json(comment);
+    const data = {
+      id: created.id,
+      rating: created.rating,
+      title: created.title,
+      content: created.content,
+      createdAt: created.createdAt.toISOString(),
+      user: {
+        firstname: created.user.firstname,
+        lastname: created.user.lastname,
+      },
+    };
+
+    return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error("Error creating comment:", error);
-    return NextResponse.json(
-      { message: "Error creating comment" },
-      { status: 500 }
-    );
-  } finally {
-    await prisma.$disconnect();
+    return NextResponse.json({ error: "Error creating comment" }, { status: 500 });
   }
-} 
+}

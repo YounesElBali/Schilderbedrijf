@@ -1,20 +1,22 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
-  async rewrites() {
-    return [
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
+    remotePatterns: [
       {
-        source: '/images/:path*',
-        destination: '/uploads/images/:path*',
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '9000',
+        pathname: '/uploads/**',
       },
-    ];
+      // Voor productie (vervang met je VPS IP)
+      {
+        protocol: 'http',
+        hostname: '', // bijvoorbeeld: '192.168.1.100'
+        port: '9000',
+        pathname: '/uploads/**',
+      },
+    ],
   },
-};
+}
 
-export default nextConfig;
+module.exports = nextConfig

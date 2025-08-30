@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+   url      = "file:./testdev.db"
 }
 
 model Users {
@@ -42,7 +42,8 @@ model Product {
   id           Int                 @id @default(autoincrement())
   name         String
   description  String?
-  price        Float
+  price        Float               // Base price (excl. BTW)
+  priceWithVAT Float?              // Optional: pre-calculated price with VAT
   images        Images[]
   articlenr    String              @default("0")
   isNew        Boolean             @default(false)
@@ -59,7 +60,7 @@ model Product {
 }
 
 model Images {
-  id        Int     @id @default(autoincrement())  // primary key required
+  id        Int     @id @default(autoincrement())
   url       String
   productId Int
   product   Product @relation(fields: [productId], references: [id])
@@ -110,6 +111,8 @@ model CartItem {
   productId Int
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
+  price     Float    // Store the actual price paid (with or without VAT)
+  country   String   @default("Nederland") // Store which country pricing was used
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -125,6 +128,8 @@ model Order {
   shippingAddress String
   billingAddress  String
   paymentMethod   String
+  country         String      @default("Nederland") // Store country for order
+  vatAmount       Float       @default(0) // Store VAT amount separately
   orderItems      OrderItem[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -141,7 +146,9 @@ model OrderItem {
   variantId Int?
   variant   ProductVariant? @relation(fields: [variantId], references: [id])
   quantity  Int
-  price     Float
+  price     Float           // Store actual price paid (with or without VAT)
+  basePrice Float           // Store base price (excl. VAT)
+  country   String          @default("Nederland") // Store pricing country
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 }
@@ -170,7 +177,7 @@ model ProductVariant {
   productId  Int
   product    Product     @relation(fields: [productId], references: [id])
   name       String // e.g., "Size 10", "Large"
-  price      Float? // Optional, if null use product's base price
+  price      Float? // Optional base price (excl. VAT), if null use product's base price
   inStock    Boolean     @default(true)
   orderItems OrderItem[]
   createdAt  DateTime    @default(now())

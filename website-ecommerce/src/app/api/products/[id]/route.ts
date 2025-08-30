@@ -1,5 +1,7 @@
+// app/api/products/[id]/route.js
 import { NextResponse } from "next/server";
 import prisma from '@/lib/prisma';
+import { deleteFileFromMinio, getFileNameFromUrl } from '@/lib/minio';
 
 export async function GET(
   request: Request,
@@ -9,18 +11,17 @@ export async function GET(
     const productId = (await params).id;
     const idNumber = parseInt(productId);
 
-    
     const product = await prisma.product.findUnique({
       where: { id: idNumber },
       include: {
         category: true,
         variants: true,
-        images: true, // include the actual Image data (id, url)
+        images: true,
         productImages: {
-            include: {
-              productImage: true, // include the actual Icon data (id, name, url)
-            },
+          include: {
+            productImage: true,
           },
+        },
       },
     });
 
@@ -57,62 +58,90 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { name, description, price, images, categoryId, isNew, inStock, articlenr, traits,iconIds } = body;
-  // 1. Verwijder bestaande relaties
-await prisma.productProductImage.deleteMany({
-  where: { productId: idNumber }
-});
+    const { name, description, price, images, categoryId, isNew, inStock, articlenr, traits, iconIds } = body;
 
-// Get current image URLs from DB
-const existingImages = await prisma.images.findMany({
-  where: { productId: idNumber },
-  select: { url: true },
-});
+    // Haal bestaande images op voordat we ze verwijderen
+    const existingImages = await prisma.images.findMany({
+      where: { productId: idNumber },
+      select: { url: true },
+    });
 
-const existingUrls = new Set(existingImages.map(img => img.url));
+    const existingUrls = new Set(existingImages.map(img => img.url));
+    const newUrls = new Set((images || []).map((img: { url: string }) => img.url));
 
-// Filter out images that already exist
-const newImages = images?.filter((img: { url: string }) => !existingUrls.has(img.url)) || [];
+    // Vind images die verwijderd moeten worden (bestaan in DB maar niet in nieuwe lijst)
+    const imagesToDelete = existingImages.filter(img => !newUrls.has(img.url));
 
+    // Verwijder oude bestanden uit MinIO (parallel uitvoeren voor betere performance)
+    const deletePromises = imagesToDelete.map(async (img) => {
+      try {
+        const fileName = getFileNameFromUrl(img.url);
+        if (fileName) {
+          await deleteFileFromMinio(fileName);
+          console.log(`Deleted file from MinIO: ${fileName}`);
+        }
+      } catch (error) {
+        console.error(`Failed to delete file from MinIO: ${img.url}`, error);
+        // Continue met andere deletes zelfs als één faalt
+      }
+    });
 
-// 2. Voeg nieuwe relaties toe via de join table
-await prisma.productProductImage.createMany({
-  data: iconIds.map((iconId: number) => ({
-    productId: idNumber,
-    productImageId: iconId,
-  })),
-});
+    // Wacht tot alle MinIO deletes klaar zijn (of falen)
+    await Promise.allSettled(deletePromises);
 
-// 3. Update product zelf zonder connect/disconnect op productImages
-const product = await prisma.product.update({
-  where: { id: idNumber },
-  data: {
-    name,
-    description,
-    traits,
-    price,
-    
-    categoryId,
-    isNew,
-    inStock,
-    articlenr,
-     images: {
-          create: images?.map((img: { url: string }) => ({
-            url: img.url,
-          })) || [],
+    // Database transactie voor atomaire updates
+    const product = await prisma.$transaction(async (tx) => {
+      // 1. Verwijder bestaande icon relaties
+      await tx.productProductImage.deleteMany({
+        where: { productId: idNumber }
+      });
+
+      // 2. Verwijder alle bestaande images uit database
+      await tx.images.deleteMany({
+        where: { productId: idNumber }
+      });
+
+      // 3. Voeg nieuwe icon relaties toe
+      if (iconIds && iconIds.length > 0) {
+        await tx.productProductImage.createMany({
+          data: iconIds.map((iconId: number) => ({
+            productId: idNumber,
+            productImageId: iconId,
+          })),
+        });
+      }
+
+      // 4. Update product en voeg nieuwe images toe
+      return await tx.product.update({
+        where: { id: idNumber },
+        data: {
+          name,
+          description,
+          traits,
+          price,
+          categoryId,
+          isNew,
+          inStock,
+          articlenr,
+          images: {
+            create: (images || []).map((img: { url: string }) => ({
+              url: img.url,
+            })),
+          },
         },
-  },
-  include: {
-    category: true,
-    images: true, // include the actual Image data (id, url)
-    productImages: {
-      include: {
-        productImage: true,
-      },
-    },
-  },
-});
-   return NextResponse.json(product);
+        include: {
+          category: true,
+          images: true,
+          productImages: {
+            include: {
+              productImage: true,
+            },
+          },
+        },
+      });
+    });
+
+    return NextResponse.json(product);
   } catch (error) {
     console.error("Error updating product:", error);
     return NextResponse.json(
@@ -137,8 +166,12 @@ export async function DELETE(
       );
     }
 
+    // Haal product en alle gerelateerde images op voordat we verwijderen
     const product = await prisma.product.findUnique({
       where: { id: idNumber },
+      include: {
+        images: true,
+      },
     });
 
     if (!product) {
@@ -148,26 +181,45 @@ export async function DELETE(
       );
     }
 
-    await prisma.images.deleteMany({
-      where: { productId: idNumber }
+    // Verwijder alle bestanden uit MinIO parallel
+    const deleteFilePromises = product.images.map(async (image) => {
+      try {
+        const fileName = getFileNameFromUrl(image.url);
+        if (fileName) {
+          await deleteFileFromMinio(fileName);
+          console.log(`Deleted file from MinIO: ${fileName}`);
+        }
+      } catch (error) {
+        console.error(`Failed to delete file from MinIO: ${image.url}`, error);
+        // Continue met andere deletes
+      }
     });
 
-    await prisma.orderItem.deleteMany({
-      where: { productId: idNumber }
-    });
+    // Wacht tot alle bestanden verwijderd zijn (of probeer het tenminste)
+    await Promise.allSettled(deleteFilePromises);
 
+    // Verwijder alles uit database in één transactie
+    await prisma.$transaction(async (tx) => {
+      // Verwijder in juiste volgorde vanwege foreign key constraints
+      await tx.images.deleteMany({
+        where: { productId: idNumber }
+      });
 
-    await prisma.productProductImage.deleteMany({
-      where: { productId: idNumber }
-    });
+      await tx.orderItem.deleteMany({
+        where: { productId: idNumber }
+      });
 
-     await prisma.productVariant.deleteMany({
-      where: { productId: idNumber }
-    });
+      await tx.productProductImage.deleteMany({
+        where: { productId: idNumber }
+      });
 
+      await tx.productVariant.deleteMany({
+        where: { productId: idNumber }
+      });
 
-    await prisma.product.delete({
+      await tx.product.delete({
         where: { id: idNumber },
+      });
     });
 
     return NextResponse.json({ 
@@ -179,5 +231,5 @@ export async function DELETE(
       { message: "Error deleting product" },
       { status: 500 }
     );
-  };
-} 
+  }
+}

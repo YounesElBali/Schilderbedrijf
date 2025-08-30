@@ -35,6 +35,11 @@ export default function Footer() {
                   Privacybeleid
                 </Link>
               </li>
+              <li>
+                <Link href="/BTW-Belgian" className="text-gray-300 hover:text-[#d6ac0a]">
+                  Betalen zonder BTW
+                </Link>
+              </li>
             </ul>
           </div>
 

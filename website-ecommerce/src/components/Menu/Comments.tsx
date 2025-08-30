@@ -22,7 +22,9 @@ export function TestimonialCarousel() {
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const response = await fetch('/api/comments');
+        const response = await fetch('/api/comments', { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
         const data = await response.json();
         
         // Ensure data is an array
