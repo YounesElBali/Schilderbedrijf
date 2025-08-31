@@ -66,14 +66,13 @@ export async function PATCH(
       select: { url: true },
     });
 
-    const existingUrls = new Set(existingImages.map(img => img.url));
     const newUrls = new Set((images || []).map((img: { url: string }) => img.url));
 
     // Vind images die verwijderd moeten worden (bestaan in DB maar niet in nieuwe lijst)
-    const imagesToDelete = existingImages.filter(img => !newUrls.has(img.url));
+    const imagesToDelete = existingImages.filter((img: { url: string }) => !newUrls.has(img.url));
 
     // Verwijder oude bestanden uit MinIO (parallel uitvoeren voor betere performance)
-    const deletePromises = imagesToDelete.map(async (img) => {
+    const deletePromises = imagesToDelete.map(async (img: any) => {
       try {
         const fileName = getFileNameFromUrl(img.url);
         if (fileName) {
@@ -90,7 +89,7 @@ export async function PATCH(
     await Promise.allSettled(deletePromises);
 
     // Database transactie voor atomaire updates
-    const product = await prisma.$transaction(async (tx) => {
+    const product = await prisma.$transaction(async (tx: any) => {
       // 1. Verwijder bestaande icon relaties
       await tx.productProductImage.deleteMany({
         where: { productId: idNumber }
@@ -182,7 +181,7 @@ export async function DELETE(
     }
 
     // Verwijder alle bestanden uit MinIO parallel
-    const deleteFilePromises = product.images.map(async (image) => {
+    const deleteFilePromises = product.images.map(async (image :any) => {
       try {
         const fileName = getFileNameFromUrl(image.url);
         if (fileName) {
@@ -199,7 +198,7 @@ export async function DELETE(
     await Promise.allSettled(deleteFilePromises);
 
     // Verwijder alles uit database in één transactie
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx:any) => {
       // Verwijder in juiste volgorde vanwege foreign key constraints
       await tx.images.deleteMany({
         where: { productId: idNumber }

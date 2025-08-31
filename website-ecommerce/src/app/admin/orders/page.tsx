@@ -7,15 +7,15 @@ import { Select } from "@/components/ui/Select";
 export default function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error] = useState<string | null>(null);
 
     useEffect(() => {
         (async () => {
             try {
                 setOrders(await API.getOrders());
-            } catch (e: any) {
-                setError(e.message);
-            } finally {
+            } catch (error: unknown) {
+  console.error('Error:', error);
+}finally {
                 setLoading(false);
             }
         })();
@@ -28,9 +28,9 @@ export default function OrdersPage() {
         try {
             await API.updateOrderStatus(id, status);
             setOrders(prev => prev.map(o => (o.id === id ? { ...o, status } : o)));
-        } catch (e: any) {
-            setError(e.message);
-        }
+        } catch (error: unknown) {
+  console.error('Error:', error);
+}
     }
 
     if (loading) return <div>Loading…</div>;

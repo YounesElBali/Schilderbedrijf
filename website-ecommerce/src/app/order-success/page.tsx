@@ -17,14 +17,9 @@ interface OrderDetails {
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);// Prevent duplicate order creation
-  //const [paymentId, setPaymentId] = useState<string | null>(null);
-  
-  const [orderProcessed, setOrderProcessed] = useState<boolean>(false);
-
-   
+  //const [paymentId, setPaymentId] = useState<string | null>(null); 
     const paymentId = searchParams.get('paymentId');
   
-
 
   useEffect(() => {
     if (!paymentId) {
@@ -87,7 +82,6 @@ interface OrderDetails {
 
         clearCart();
         localStorage.removeItem('pendingOrderData');
-        setOrderProcessed(true); 
       } catch (error) {
         console.error('Error creating order:', error);
         setError('Er is een fout opgetreden bij het verwerken van je bestelling. Neem contact op met de klantenservice.');

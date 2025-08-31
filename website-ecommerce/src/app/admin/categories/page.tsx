@@ -17,8 +17,8 @@ export default function CategoriesPage() {
         try {
             const data = await API.getCategories();
             setCategories(data);
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e: unknown) {
+            console.log(e)
         } finally {
             setLoading(false);
         } })();
@@ -37,9 +37,9 @@ export default function CategoriesPage() {
             const created = await API.createCategory({ name, image, path });
             setCategories(prev => [...prev, created]);
             (e.target as HTMLFormElement).reset();
-        } catch (err: any) {
-            setError(err.message);
-        }
+        } catch (error: unknown) {
+  console.error('Error:', error);
+}
     };   
 
     async function handleDelete(category: Category) {
@@ -48,9 +48,9 @@ export default function CategoriesPage() {
         try {
             await API.deleteCategory(category.id);
             setCategories(prev => prev.filter(c => c.id !== category.id));
-        } catch (err: any) {
-            setError(err.message);
-        }
+        } catch (error: unknown) {
+  console.error('Error:', error);
+}
     };   
 
     if (loading) return <div className="p-4">Loading…</div>;

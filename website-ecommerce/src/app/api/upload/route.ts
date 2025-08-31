@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       url: url,
       fileName: fileName
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Upload error:', error);
     return NextResponse.json({ error: 'Upload failed: ' + error.message }, { status: 500 });
   }
@@ -49,7 +49,7 @@ export async function DELETE(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Delete error:', error);
     return NextResponse.json({ error: 'Delete failed: ' + error.message }, { status: 500 });
   }

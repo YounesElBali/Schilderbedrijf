@@ -26,8 +26,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(icon);
-  } catch (error: any) {
-    if (error.code === "P2002") {
+  } catch (error: unknown) {
+    if (error === "P2002") {
       return NextResponse.json(
         { message: "Icon with this name or URL already exists" },
         { status: 400 }

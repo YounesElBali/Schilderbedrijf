@@ -4,7 +4,6 @@ import { useCart } from '@/contexts/CartContext';
 import { usePricing } from '@/contexts/PriceContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import DeliveryTimeline from '@/components/Menu/DeliveryTimeLine';
 
 interface ProductVariant {

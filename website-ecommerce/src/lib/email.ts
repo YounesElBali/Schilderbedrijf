@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to send order confirmation email
-export async function sendOrderConfirmationEmail( orderData: any, createdOrder: any) {
+export async function sendOrderConfirmationEmail( orderData: { email: string },  _createdOrder?: unknown) {
   try {
     // Get the email from the orderData (assuming it's stored there)
     const email = orderData.email;
@@ -51,7 +51,7 @@ export async function sendOrderConfirmationEmail( orderData: any, createdOrder: 
 }
 
 // Function to send track and trace email
-export async function sendTrackAndTraceEmail(orderData: any, trackingInfo: any) {
+export async function sendTrackAndTraceEmail(orderData: { email: string }, trackingInfo: { trackingNumber: string; trackingLink: string }){
   try {
     const email = orderData.email;
     const { trackingNumber, trackingLink } = trackingInfo;

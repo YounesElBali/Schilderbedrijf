@@ -10,17 +10,17 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    const data = comments.map(c => ({
-      id: c.id,
-      rating: c.rating,
-      title: c.title,
-      content: c.content,
-      createdAt: c.createdAt.toISOString(),
-      user: {
-        firstname: c.user.firstname,
-        lastname: c.user.lastname,
-      },
-    }));
+  const data = comments.map((c: any) => ({
+  id: c.id,
+  rating: c.rating,
+  title: c.title,
+  content: c.content,
+  createdAt: c.createdAt.toISOString(),
+  user: {
+    firstname: c.user.firstname,
+    lastname: c.user.lastname,
+  },
+}));
 
     return NextResponse.json(data);
   } catch (error) {

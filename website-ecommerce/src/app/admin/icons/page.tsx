@@ -10,15 +10,15 @@ import { confirm } from "@/components/admin/ConfirmDialog";
 export default function IconsPage() {
     const [icons, setIcons] = useState<Icon[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error] = useState<string | null>(null);
 
     useEffect(() => {
         (async () => {
             try {
                 setIcons(await API.getIcons());
-            } catch (e: any) {
-                setError(e.message);
-            } finally {
+            } catch (error: unknown) {
+  console.error('Error:', error);
+}finally {
                 setLoading(false);
             }
         })();
@@ -36,9 +36,9 @@ export default function IconsPage() {
             const created = await API.createIcon({ name, url: path });
             setIcons(prev => [...prev, created]);
             (e.target as HTMLFormElement).reset();
-        } catch (e: any) {
-            setError(e.message);
-        }
+        } catch (error: unknown) {
+  console.error('Error:', error);
+}
     }
 
     async function handleDelete(id: number) {

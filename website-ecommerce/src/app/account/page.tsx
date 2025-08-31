@@ -81,6 +81,7 @@ export default function Account() {
         }
       }
     } catch (err) {
+      console.log(err);
       setError("An error occurred. Please try again.");
     }
   };

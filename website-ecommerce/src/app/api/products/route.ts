@@ -22,8 +22,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  let body: any = null; // Declare outside try block
+  
   try {
-    const body = await request.json();
+    body = await request.json();
     const {
       name,
       description,
@@ -37,6 +39,7 @@ export async function POST(request: Request) {
       deliveryCost,
       iconIds = [],
     } = body ?? {};
+
 
     // Basic validation
     if (!name || price == null || !categoryId || !articlenr) {
@@ -58,7 +61,7 @@ export async function POST(request: Request) {
     }
 
     // Create product + images + optional icon joins
-    const created = await prisma.$transaction(async (tx) => {
+    const created = await prisma.$transaction(async (tx : any) => {
       const product = await tx.product.create({
         data: {
           name,
@@ -98,10 +101,10 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(full);
-  } catch (error) {
+  }  catch (error) {
     console.error("Error creating product:", error);
     
-    // Als er een fout optreedt na upload, probeer de geüploade bestanden op te ruimen
+    // Now body is accessible here
     if (body?.images) {
       const cleanupPromises = body.images.map(async (img: { url: string }) => {
         try {

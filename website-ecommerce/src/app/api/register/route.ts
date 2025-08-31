@@ -46,19 +46,22 @@ export async function POST(request: Request) {
       console.log("User created successfully:", user.email);
       return NextResponse.json({ message: "User created successfully", user });
     }
-  } catch (error: any) {
-    console.error("Registration error:", error);
-    if (error.code === 'P2002') {
-      return NextResponse.json(
-        { message: "Email already exists" },
-        { status: 400 }
-      );
-    }
+  } catch (error: unknown) {
+  console.error("Registration error:", error);
+  
+  // Type guard to check if error has a code property
+  if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
     return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
+      { message: "Email already exists" },
+      { status: 400 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
+  
+  return NextResponse.json(
+    { message: "Internal server error" },
+    { status: 500 }
+  );
+} finally {
+  await prisma.$disconnect();
+}
 } 

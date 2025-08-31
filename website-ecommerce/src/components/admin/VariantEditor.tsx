@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ProductVariant } from "@/types";
 
-export function VariantEditor({ productId, variants, onAdd, onUpdate, onDelete,}: {
+export function VariantEditor({ variants, onAdd, onUpdate, onDelete,}: {
     productId: number;
     variants: ProductVariant[] | undefined;
     onAdd: (name: string, price?: number) => void;

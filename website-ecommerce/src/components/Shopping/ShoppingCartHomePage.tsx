@@ -1,31 +1,14 @@
 "use client";
 import { useCart } from "@/contexts/CartContext";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-
-interface ProductImage {
-  id: number;
-  url: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: ProductImage[];
-  category: string;
-}
-
+import { useEffect, } from "react";
 
 export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeModal: () => void }) {
   const { cart, removeFromCart, updateQuantity } = useCart();
-  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRecommendedProducts = async () => {
       if (cart.length === 0) {
-        setIsLoading(false);
         return;
       }
 
@@ -43,11 +26,10 @@ export function EmptyCartModal({ isOpen, closeModal }: { isOpen: boolean; closeM
         }
 
         const data = await response.json();
-        setRecommendedProducts(data);
       } catch (error) {
         console.error('Error fetching random products:', error);
       } finally {
-        setIsLoading(false);
+        console.log(false);
       }
     };
 

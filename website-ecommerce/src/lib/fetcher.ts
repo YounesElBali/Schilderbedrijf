@@ -45,10 +45,10 @@ export async function apiFetch(
     if (init.schema) return init.schema.parse(data);
 
     return data;
-  } catch (err: any) {
-    if (err?.name === "AbortError") throw new HttpError("Request timed out", 408);
+  } catch (err: unknown) {
+    if (err === "AbortError") throw new HttpError("Request timed out", 408);
     if (err instanceof HttpError) throw err;
-    throw new HttpError(err?.message || "Network error", 520);
+    throw new HttpError( "Network error", 520);
   } finally {
     clearTimeout(timeout);
   }

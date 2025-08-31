@@ -32,13 +32,17 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(category);
-  } catch (error: any) {
-    if (error.code === "P2002") {
+  } catch (error: unknown) {
+  // Check if it's a Prisma error
+  if (error && typeof error === 'object' && 'code' in error) {
+    const prismaError = error as { code: string };
+    if (prismaError.code === "P2002") {
       return NextResponse.json(
         { message: "Category name or path already exists" },
         { status: 400 }
       );
     }
+  }
     return NextResponse.json(
       { message: "Error creating category" },
       { status: 500 }

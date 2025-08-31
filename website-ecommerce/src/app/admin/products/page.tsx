@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { API } from "@/lib/api";
 import { Category, Icon, Product, ProductImage } from "@/types";
 import { Button } from "@/components/ui/Button";
@@ -19,8 +19,7 @@ export default function ProductsPage() {
     const [editing, setEditing] = useState<Product | null>(null);
     const [selectedIconIds, setSelectedIconIds] = useState<number[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
+    const [error] = useState<string | null>(null);
 
     useEffect(() => {
         (async () => {
@@ -33,9 +32,9 @@ export default function ProductsPage() {
                 setCategories(cats);
                 setProducts(prods);
                 setIcons(icons);
-            } catch (e: any) {
-                setError(e.message);
-            } finally {
+            } catch (error: unknown) {
+  console.error('Error:', error);
+} finally {
                 setLoading(false);
             }
         })();
@@ -74,9 +73,9 @@ export default function ProductsPage() {
             setProducts(prev => [created, ...prev]);
             (e.target as HTMLFormElement).reset();
             setSelectedIconIds([]);
-        } catch (err: any) {
-            setError(err.message);
-        }
+        } catch (error: unknown) {
+  console.error('Error:', error);
+}
     }
 
     async function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
@@ -112,9 +111,9 @@ export default function ProductsPage() {
             setProducts(prev => prev.map(p => (p.id === updated.id ? updated : p)));
             setEditing(null);
             (e.target as HTMLFormElement).reset();
-        } catch (err: any) {
-            setError(err.message);
-        }
+        } catch (error: unknown) {
+  console.error('Error:', error);
+}
     }
 
 
@@ -125,9 +124,9 @@ export default function ProductsPage() {
         try {
             await API.deleteProduct(product.id);
             setProducts(prev => prev.filter(p => p.id !== product.id));
-        } catch (err: any) {
-            setError(err.message);
-        }
+        } catch (error: unknown) {
+  console.error('Error:', error);
+}
     }
 
 
@@ -183,7 +182,7 @@ export default function ProductsPage() {
                         <ul className="flex gap-2 mt-2 flex-wrap">
                             {editing.images.map(img => (
                                 <li key={img.url}>
-                                    <img src={img.url} className="w-24 h-24 object-cover rounded" />
+                                    <img src={img.url} className="w-24 h-24 object-cover rounded" alt="add image"/>
                                 </li>
                             ))}
                         </ul>
@@ -211,7 +210,12 @@ export default function ProductsPage() {
                                 setEditing(fresh);
                             }}
                             onUpdate={async (variantId, patch) => {
-                                await API.updateVariant(editing.id, variantId, patch);
+    // Convert null to undefined for price
+                                const cleanPatch = {
+                                    ...patch,
+                                    price: patch.price === null ? undefined : patch.price
+                                };
+                                await API.updateVariant(editing.id, variantId, cleanPatch);
                                 const refreshed = await API.getProducts();
                                 setProducts(refreshed);
                                 setEditing(refreshed.find(p => p.id === editing.id) || null);

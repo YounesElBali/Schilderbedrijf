@@ -20,7 +20,7 @@ export default function Terms() {
             </p>
             <p className="text-gray-600">
               Een cookie is een tekstbestand dat door een web pagina server op je harde schijf wordt geplaatst.
-              Cookies kunnen niet worden gebruikt om programma's uit te voeren of virussen op je computer te plaatsen.
+              Cookies kunnen niet worden gebruikt om programma&apos;s uit te voeren of virussen op je computer te plaatsen.
             </p>
           </section>
   

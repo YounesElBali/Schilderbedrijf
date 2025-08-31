@@ -1,6 +1,5 @@
 // pages/api/create-payment-session.ts
 
-import { NextApiRequest, NextApiResponse } from 'next';
 import Mollie from '@mollie/api-client';
 import { NextRequest } from 'next/server';
 

@@ -23,44 +23,44 @@ export function SideMenu({ isOpen, closeModal }: { isOpen: boolean; closeModal: 
       <nav className="flex-1 overflow-y-auto">
         <ul className="py-2">
           <li>
-            <a 
+            <Link 
               href="/category/Tape" 
               className="block px-6 py-4 text-gray-900 hover:bg-gray-100"
             >
               Tape
-            </a>
+            </Link>
           </li>
           <li>
-            <a 
+            <Link 
               href="/category/Schuren" 
               className="block px-6 py-4 text-gray-900 hover:bg-gray-100"
             >
               Schuren
-            </a>
+            </Link>
           </li>
           <li>
-            <a 
+            <Link 
               href="/category/Folie" 
               className="block px-6 py-4 text-gray-900 hover:bg-gray-100"
             >
               Folie
-            </a>
+            </Link>
           </li>
           <li>
-            <a 
+            <Link 
               href="/category/Lijm" 
               className="block px-6 py-4 text-gray-900 hover:bg-gray-100"
             >
               Lijm
-            </a>
+            </Link>
           </li>
           <li>
-            <a 
+            <Link 
               href="/category/Polijst" 
               className="block px-6 py-4 text-gray-900 hover:bg-gray-100"
             >
               Polijst
-            </a>
+            </Link>
           </li>
         </ul>
       </nav>

@@ -1,5 +1,5 @@
 // lib/minio.js
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 const s3Client = new S3Client({
   endpoint: process.env.MINIO_ENDPOINT,

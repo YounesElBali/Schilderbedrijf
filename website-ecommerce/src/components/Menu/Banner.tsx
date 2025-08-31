@@ -9,7 +9,7 @@ import Marquee from "react-fast-marquee";
 
 export function Banner() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [cartEmpty, setCartEmpty] = useState(true);
+  const [cartEmpty] = useState(true);
   const [cartModalOpen, setCartModalOpen] = useState(false);
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   

@@ -38,7 +38,7 @@ export default function BTWBelgian() {
                                 </div>
                                 <div>
                                     <p className="font-medium text-gray-900">Geldig Belgisch BTW-nummer</p>
-                                    <p className="text-gray-600">Je moet een geldig Belgisch BTW-nummer hebben dat begint met "BE" gevolgd door 10 cijfers (bijvoorbeeld: BE0123456789)</p>
+                                    <p className="text-gray-600">Je moet een geldig Belgisch BTW-nummer hebben dat begint met (BE) gevolgd door 10 cijfers (bijvoorbeeld: BE0123456789)</p>
                                 </div>
                             </div>
                             <div className="flex items-start space-x-3">
@@ -102,7 +102,7 @@ export default function BTWBelgian() {
                                 <div className="bg-green-50 border border-green-200 rounded p-3">
                                     <code className="text-green-800 font-mono">BE0123456789</code>
                                     <p className="text-sm text-green-700 mt-1">
-                                        Begint met "BE" gevolgd door exact 10 cijfers (geen spaties of andere tekens)
+                                        Begint met (BE) gevolgd door exact 10 cijfers (geen spaties of andere tekens)
                                     </p>
                                 </div>
                             </div>

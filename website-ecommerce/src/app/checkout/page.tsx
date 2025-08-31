@@ -5,26 +5,14 @@ import { usePricing } from '@/contexts/PriceContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-interface ShippingAddress {
-  firstName: string;
-  lastName: string;
-  street: string;
-  postalCode: string;
-  city: string;
-  phone: string;
-  country: string;
-  company?: string;
-  vatNumber?: string;
-}
-
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, getTotalPrice, clearCart } = useCart();
+  const { cart } = useCart();
   const { selectedCountry, calculatePrice, getCountryData, vatRate, isVATExempt, validateBelgianVAT } = usePricing();
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isGuestCheckout, setIsGuestCheckout] = useState(true);
+  const [isGuestCheckout] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [deliveryCost, setDeliveryCost] = useState(0);
   const [vatNumber, setVatNumber] = useState('');
@@ -62,7 +50,6 @@ export default function CheckoutPage() {
 
   // Calculate VAT amount for display
   const getVATAmount = () => {
-    const countryData = getCountryData();
     const exempt = isVATExempt(vatNumber);
     
     // No VAT if exempt
@@ -407,7 +394,7 @@ export default function CheckoutPage() {
           {/* Submit button */}
           <button
             type="submit"
-            disabled={isProcessing || (countryData?.code === 'BE' && vatNumber && !validateBelgianVAT(vatNumber))}
+            disabled={isProcessing || (countryData?.code === 'BE' && Boolean(vatNumber) && !validateBelgianVAT(vatNumber))}
             className={`w-full bg-[#d6ac0a] text-black py-4 rounded mb-8 ${
               isProcessing || (countryData?.code === 'BE' && vatNumber && !validateBelgianVAT(vatNumber))
                 ? 'opacity-50 cursor-not-allowed' 
